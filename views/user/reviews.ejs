@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+        <main class="main-content write-review">
+            <div class="page-header">
+                <h2>Escribir Nueva Crítica</h2>
+                <p>Comparte tu opinión sobre una película o serie</p>
+            </div>
+
+            <form action="/user/reviews" method="POST" class="review-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="type">Tipo:</label>
+                        <select id="type" name="type" required>
+                            <option value="">Selecciona tipo</option>
+                            <option value="movie">🎬 Película</option>
+                            <option value="series">📺 Serie</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Título:</label>
+                        <input type="text" id="title" name="title" placeholder="Nombre de la película o serie" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rating">Calificación:</label>
+                    <div class="rating-selector">
+                        <% for (let i = 1; i <= 5; i++) { %>
+                            <label class="rating-option">
+                                <input type="radio" name="rating" value="<%= i %>" required>
+                                <span class="star">⭐</span>
+                                <span><%= i %></span>
+                            </label>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="review">Tu Crítica:</label>
+                    <textarea id="review" name="review" rows="6" placeholder="Comparte tus pensamientos sobre la película o serie..." required></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Publicar Crítica</button>
+                    <a href="/user/dashboard" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+
+            <div class="suggestions">
+                <h3>Películas y Series Populares</h3>
+                <div class="suggestions-grid">
+                    <div class="suggestion-category">
+                        <h4>🎬 Películas</h4>
+                        <% movies.forEach(movie => { %>
+                            <div class="suggestion-item" onclick="document.getElementById('title').value = '<%= movie.title %>'; document.getElementById('type').value = 'movie';">
+                                <span><%= movie.title %></span>
+                                <small>(<%= movie.year %>)</small>
+                            </div>
+                        <% }); %>
+                    </div>
+                    <div class="suggestion-category">
+                        <h4>📺 Series</h4>
+                        <% series.forEach(serie => { %>
+                            <div class="suggestion-item" onclick="document.getElementById('title').value = '<%= serie.title %>'; document.getElementById('type').value = 'series';">
+                                <span><%= serie.title %></span>
+                                <small>(<%= serie.year %>)</small>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+        </main>
+<%- include('../partials/footer') %>

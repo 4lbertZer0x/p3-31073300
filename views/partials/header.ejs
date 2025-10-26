@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - CineCríticas</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <h1>🎬 CineCríticas</h1>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="/" class="<%= title === 'Inicio' ? 'active' : '' %>">Inicio</a></li>
+                    <% if (locals.user) { %>
+                        <% if (locals.user.role === 'user') { %>
+                            <li><a href="/user/dashboard" class="<%= title === 'Mi Dashboard' ? 'active' : '' %>">Mi Cuenta</a></li>
+                            <li><a href="/user/reviews" class="<%= title === 'Escribir Crítica' ? 'active' : '' %>">Escribir Crítica</a></li>
+                        <% } else if (locals.user.role === 'admin') { %>
+                            <li><a href="/admin" class="<%= title === 'Panel de Administración' ? 'active' : '' %>">Admin</a></li>
+                        <% } %>
+                        <li><a href="/logout">Cerrar Sesión (<%= locals.user.username %>)</a></li>
+                    <% } else { %>
+                        <li><a href="/login" class="<%= title === 'Iniciar Sesión' ? 'active' : '' %>">Iniciar Sesión</a></li>
+                        <li><a href="/register" class="<%= title === 'Registrarse' ? 'active' : '' %>">Registrarse</a></li>
+                    <% } %>
+                </ul>
+            </nav>
+        </header>
