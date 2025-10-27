@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+        <main class="main-content admin-reviews">
+            <div class="admin-header">
+                <h2>Gestión de Críticas</h2>
+                <p>Modera las críticas escritas por los usuarios</p>
+            </div>
+
+            <div class="reviews-table-container">
+                <table class="reviews-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Usuario</th>
+                            <th>Rating</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% reviews.forEach(review => { %>
+                            <tr>
+                                <td><%= review.id %></td>
+                                <td><strong><%= review.title %></strong></td>
+                                <td>
+                                    <span class="type-badge <%= review.type %>">
+                                        <%= review.type === 'movie' ? '🎬 Película' : '📺 Serie' %>
+                                    </span>
+                                </td>
+                                <td><%= review.username %></td>
+                                <td>
+                                    <div class="rating-stars">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <span class="star <%= i <= review.rating ? 'filled' : '' %>">⭐</span>
+                                        <% } %>
+                                    </div>
+                                </td>
+                                <td><%= review.date %></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-small btn-info" onclick="showReview( review.id )">Ver</button>
+                                        <button class="btn btn-small btn-danger">Eliminar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal para ver crítica completa -->
+            <div id="reviewModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h3>Crítica Completa</h3>
+                    <div id="reviewModalContent"></div>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            function showReview(reviewId) {
+                // En una aplicación real, harías una petición al servidor
+                // Por ahora mostramos un mensaje simple
+                document.getElementById('reviewModalContent').innerHTML = `
+                    <p><strong>ID:</strong> ${reviewId}</p>
+                    <p>Esta funcionalidad se conectaría a una base de datos real para mostrar la crítica completa.</p>
+                `;
+                document.getElementById('reviewModal').style.display = 'block';
+            }
+
+            // Cerrar modal
+            document.querySelector('.close').onclick = function() {
+                document.getElementById('reviewModal').style.display = 'none';
+            }
+        </script>
+<%- include('../partials/footer') %>

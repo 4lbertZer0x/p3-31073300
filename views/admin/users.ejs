@@ -1,0 +1,54 @@
+<%- include('../partials/header') %>
+        <main class="main-content admin-users">
+            <div class="admin-header">
+                <h2>Gestión de Usuarios</h2>
+                <p>Administra los usuarios registrados en la plataforma</p>
+            </div>
+
+            <div class="users-table-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(user => { %>
+                            <tr>
+                                <td><%= user.id %></td>
+                                <td><%= user.username %></td>
+                                <td><%= user.email %></td>
+                                <td>
+                                    <span class="role-badge <%= user.role %>">
+                                        <%= user.role === 'admin' ? 'Administrador' : 'Usuario' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-small btn-info">Ver</button>
+                                        <button class="btn btn-small btn-warning">Editar</button>
+                                        <% if (user.id !== 1) { %>
+                                            <button class="btn btn-small btn-danger">Eliminar</button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-notes">
+                <h4>Notas:</h4>
+                <ul>
+                    <li>Total de usuarios: <strong><%= users.length %></strong></li>
+                    <li>Administradores: <strong><%= users.filter(u => u.role === 'admin').length %></strong></li>
+                    <li>Usuarios regulares: <strong><%= users.filter(u => u.role === 'user').length %></strong></li>
+                </ul>
+            </div>
+        </main>
+<%- include('../partials/footer') %>
