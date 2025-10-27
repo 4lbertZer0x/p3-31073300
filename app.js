@@ -1,3 +1,4 @@
+// Sin dotenv en producción - Render maneja las variables
 if (process.env.NODE_ENV !== 'production') {
   try {
     require('dotenv').config();
@@ -11,6 +12,10 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 
+// Importar la inicialización de la base de datos CORRECTAMENTE
+const { initializeDatabase } = require('./models');
+const DatabaseService = require('./services/DatabaseService');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -21,9 +26,9 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Configuración de sesión para producción
+// Configuración de sesión SIMPLIFICADA para producción
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'cinecriticas-production-secret-key',
+  secret: process.env.SESSION_SECRET || 'cinecriticas-production-secret-key-2024',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -31,100 +36,128 @@ app.use(session({
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
-  
-  // Middleware para user global
-  app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
-    res.locals.currentPath = req.path;
-    next();
+
+// Middleware para user global
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  res.locals.currentPath = req.path;
+  next();
+});
+
+// Middlewares de autenticación
+const requireAuth = (req, res, next) => {
+  if (!req.session.user) {
+    req.session.returnTo = req.originalUrl;
+    return res.redirect('/login');
+  }
+  next();
+};
+
+const requireAdmin = (req, res, next) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.redirect('/');
+  }
+  next();
+};
+
+// Ruta de salud para Render
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
-  
-  // Middlewares de autenticación
-  const requireAuth = (req, res, next) => {
-    if (!req.session.user) {
-      req.session.returnTo = req.originalUrl;
-      return res.redirect('/login');
-    }
-    next();
-  };
-  
-  const requireAdmin = (req, res, next) => {
-    if (!req.session.user || req.session.user.role !== 'admin') {
-      return res.redirect('/');
-    }
-    next();
-  };
-  
-  // Rutas Públicas
-  app.get('/', async (req, res) => {
-    try {
-      const featuredReviews = await DatabaseService.getFeaturedReviews();
-      res.render('index', {
-        title: 'Inicio - CineCríticas',
-        featuredReviews: featuredReviews
-      });
-    } catch (error) {
-      console.error('Error en página principal:', error);
-      res.render('index', {
-        title: 'Inicio - CineCríticas',
-        featuredReviews: []
-      });
-    }
-  });
-  
-  // ... (mantén el resto de tus rutas igual que antes)
-  
-  // Ruta de salud para Render
-  app.get('/health', (req, res) => {
-    res.status(200).json({ 
-      status: 'OK', 
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
+});
+
+// Ruta principal SIMPLIFICADA
+app.get('/', async (req, res) => {
+  try {
+    const featuredReviews = await DatabaseService.getFeaturedReviews();
+    res.render('index', {
+      title: 'Inicio - CineCríticas',
+      featuredReviews: featuredReviews
     });
-  });
-  
-  // Manejo de errores
-  app.use((error, req, res, next) => {
-    console.error('Error global:', error);
-    res.status(500).render('error', {
-      title: 'Error - CineCríticas',
-      message: 'Ha ocurrido un error inesperado.'
+  } catch (error) {
+    console.error('Error en página principal:', error);
+    res.render('index', {
+      title: 'Inicio - CineCríticas',
+      featuredReviews: []
     });
+  }
+});
+
+// Ruta de login SIMPLIFICADA
+app.get('/login', (req, res) => {
+  res.render('login', {
+    title: 'Iniciar Sesión - CineCríticas',
+    error: null
   });
-  
-  // Ruta 404
-  app.use((req, res) => {
-    res.status(404).render('404', {
-      title: 'Página No Encontrada - CineCríticas'
-    });
-  });
-  
-  // Iniciar servidor
-  const startServer = async () => {
-    try {
-      console.log('🚀 Iniciando CineCríticas...');
-      console.log('📍 Entorno:', process.env.NODE_ENV || 'development');
-      console.log('🗄️  Base de datos:', process.env.DATABASE_URL ? 'PostgreSQL (Render)' : 'No configurada');
-      
-      // Inicializar base de datos
-      const dbSuccess = await initializeDatabase();
-      
-      app.listen(PORT, () => {
-        console.log(`🎬 Servidor corriendo en: http://localhost:${PORT}`);
-        console.log('✅ ¡Aplicación lista para usar!');
-        
-        if (dbSuccess) {
-          console.log('👤 Cuentas de prueba:');
-          console.log('   Admin: usuario: admin, contraseña: admin123');
-          console.log('   Usuario: usuario: usuario1, contraseña: user123');
-        } else {
-          console.log('⚠️  La aplicación funciona pero la base de datos no está disponible');
-        }
+});
+
+app.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await DatabaseService.getUserByUsername(username);
+    
+    if (user && await user.verifyPassword(password)) {
+      req.session.user = user.getSafeData();
+      res.redirect(user.role === 'admin' ? '/admin' : '/user/dashboard');
+    } else {
+      res.render('login', {
+        title: 'Iniciar Sesión - CineCríticas',
+        error: 'Usuario o contraseña incorrectos'
       });
-    } catch (error) {
-      console.error('💥 Error crítico iniciando servidor:', error);
-      process.exit(1);
     }
-  };
-  
-  startServer();
+  } catch (error) {
+    console.error('Error en login:', error);
+    res.render('login', {
+      title: 'Iniciar Sesión - CineCríticas',
+      error: 'Error del servidor'
+    });
+  }
+});
+
+// Ruta 404
+app.use((req, res) => {
+  res.status(404).render('404', {
+    title: 'Página No Encontrada - CineCríticas'
+  });
+});
+
+// Manejo de errores
+app.use((error, req, res, next) => {
+  console.error('Error global:', error);
+  res.status(500).render('error', {
+    title: 'Error - CineCríticas',
+    message: 'Ha ocurrido un error inesperado.'
+  });
+});
+
+// Iniciar servidor
+const startServer = async () => {
+  try {
+    console.log('🚀 Iniciando CineCríticas...');
+    console.log('📍 Entorno:', process.env.NODE_ENV || 'development');
+    
+    // Inicializar base de datos
+    console.log('🔄 Inicializando base de datos...');
+    const dbSuccess = await initializeDatabase();
+    
+    if (dbSuccess) {
+      console.log('✅ Base de datos inicializada correctamente');
+    } else {
+      console.log('⚠️  Base de datos no disponible, continuando...');
+    }
+    
+    app.listen(PORT, () => {
+      console.log(`🎬 Servidor corriendo en el puerto: ${PORT}`);
+      console.log('✅ ¡Aplicación lista para usar!');
+    });
+  } catch (error) {
+    console.error('💥 Error crítico iniciando servidor:', error);
+    process.exit(1);
+  }
+};
+
+// Iniciar la aplicación
+startServer();
