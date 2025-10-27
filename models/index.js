@@ -1,114 +1,73 @@
-const { sequelize, testConnection } = require('../config/database');
+const DatabaseService = require('../services/DatabaseService');
 
-// Importar modelos
-const User = require('./User');
-const Movie = require('./Movie');
-const Series = require('./Series');
-const Review = require('./Review');
-
-// Configurar relaciones
-User.hasMany(Review, { foreignKey: 'user_id', as: 'reviews' });
-Review.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
-
-// Inicializar base de datos
-const initializeDatabase = async () => {
+async function initializeDatabase() {
   try {
-    console.log('🔄 Inicializando base de datos...');
+    console.log('🔄 Conectando a PostgreSQL...');
     
-    const connected = await testConnection();
-    if (!connected) {
-      console.log('❌ No se pudo conectar a la base de datos');
-      return false;
-    }
-
-    // Sincronizar modelos
-    await sequelize.sync({ force: false });
-    console.log('✅ Modelos sincronizados correctamente');
-
-    // Insertar datos de ejemplo
-    await seedDatabase();
+    // Verificar conexión ejecutando una consulta simple
+    const result = await DatabaseService.getClient().query('SELECT NOW() as current_time');
+    console.log('✅ PostgreSQL conectado correctamente:', result.rows[0].current_time);
+    
+    // Verificar si las tablas existen, si no, crearlas
+    await createTablesIfNotExist();
     
     return true;
   } catch (error) {
-    console.error('❌ Error inicializando base de datos:', error);
+    console.error('❌ Error inicializando base de datos:', error.message);
+    
+    // En producción, no podemos continuar sin base de datos
+    if (process.env.NODE_ENV === 'production') {
+      console.error('💥 No se puede continuar en producción sin base de datos');
+      return false;
+    }
+    
+    console.log('⚠️  Modo desarrollo: continuando sin base de datos');
     return false;
   }
-};
+}
 
-// Datos de ejemplo
-const seedDatabase = async () => {
+async function createTablesIfNotExist() {
   try {
-    const userCount = await User.count();
-    if (userCount > 0) {
-      console.log('✅ La base de datos ya contiene datos');
-      return;
-    }
+    // Tabla de usuarios
+    await DatabaseService.getClient().query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-    console.log('🌱 Insertando datos de ejemplo...');
+    // Tabla de reseñas
+    await DatabaseService.getClient().query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        content TEXT NOT NULL,
+        rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+        movie_title VARCHAR(200) NOT NULL,
+        user_id INTEGER REFERENCES users(id),
+        is_featured BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-    // Crear usuarios
-    const users = await User.bulkCreate([
-      {
-        username: 'admin',
-        email: 'admin@criticas.com',
-        password: 'admin123',
-        role: 'admin'
-      },
-      {
-        username: 'usuario1',
-        email: 'usuario1@email.com',
-        password: 'user123'
-      }
-    ]);
+    // Tabla de sesiones (para connect-pg-simple)
+    await DatabaseService.getClient().query(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" VARCHAR NOT NULL PRIMARY KEY,
+        "sess" JSON NOT NULL,
+        "expire" TIMESTAMP(6) NOT NULL
+      )
+    `);
 
-    // Crear películas
-    const movies = await Movie.bulkCreate([
-      {
-        title: 'Inception',
-        year: 2010,
-        genre: 'Ciencia Ficción',
-        director: 'Christopher Nolan',
-        description: 'Un ladrón que roba secretos corporativos a través de los sueños.',
-        rating: 8.8
-      }
-    ]);
-
-    // Crear series
-    const series = await Series.bulkCreate([
-      {
-        title: 'Stranger Things',
-        year: 2016,
-        genre: 'Terror',
-        seasons: 4,
-        description: 'Misterios sobrenaturales en un pequeño pueblo.',
-        rating: 8.7
-      }
-    ]);
-
-    // Crear reseñas
-    await Review.bulkCreate([
-      {
-        user_id: users[1].id,
-        content_type: 'movie',
-        content_id: movies[0].id,
-        title: '¡Increíble película!',
-        rating: 5,
-        comment: 'Una obra maestra del cine moderno.'
-      }
-    ]);
-
-    console.log('✅ Datos de ejemplo insertados correctamente');
-
+    console.log('✅ Tablas verificadas/creadas correctamente');
   } catch (error) {
-    console.error('❌ Error insertando datos de ejemplo:', error);
+    console.error('❌ Error creando tablas:', error);
+    throw error;
   }
-};
+}
 
-module.exports = {
-  sequelize,
-  User,
-  Movie,
-  Series,
-  Review,
-  initializeDatabase
-};
+module.exports = { initializeDatabase };

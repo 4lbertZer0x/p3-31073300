@@ -1,108 +1,90 @@
-const { User, Movie, Series, Review } = require('../models');
+// services/DatabaseService.js
+const { Pool } = require('pg');
 
 class DatabaseService {
-  // ===== USUARIOS =====
-  static async getUserById(id) {
-    return await User.findByPk(id);
-  }
+  constructor() {
+    this.pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      max: 20, // máximo de conexiones
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
 
-  static async getUserByUsername(username) {
-    return await User.findOne({ where: { username } });
-  }
-
-  static async getUserByEmail(email) {
-    return await User.findOne({ where: { email } });
-  }
-
-  static async createUser(userData) {
-    const user = await User.create(userData);
-    return user.getSafeData();
-  }
-
-  static async getAllUsers() {
-    return await User.findAll({
-      attributes: { exclude: ['password'] },
-      order: [['createdAt', 'DESC']]
+    this.pool.on('error', (err) => {
+      console.error('❌ Error de PostgreSQL:', err);
     });
   }
 
-  // ===== PELÍCULAS =====
-  static async getAllMovies() {
-    return await Movie.findAll({ order: [['title', 'ASC']] });
+  getClient() {
+    return this.pool;
   }
 
-  static async getMovieById(id) {
-    return await Movie.findByPk(id);
+  async query(text, params) {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(text, params);
+      return result;
+    } finally {
+      client.release();
+    }
   }
 
-  static async createMovie(movieData) {
-    return await Movie.create(movieData);
+  async getUserByUsername(username) {
+    try {
+      const result = await this.query(
+        'SELECT * FROM users WHERE username = $1', 
+        [username]
+      );
+      
+      if (result.rows.length === 0) return null;
+      
+      const user = result.rows[0];
+      
+      // Añadir métodos al objeto usuario
+      return {
+        ...user,
+        verifyPassword: async (password) => {
+          // Implementación básica - reemplaza con bcrypt si lo tienes
+          return user.password_hash === password;
+        },
+        getSafeData: () => {
+          const { password_hash, ...safeData } = user;
+          return safeData;
+        }
+      };
+    } catch (error) {
+      console.error('Error en getUserByUsername:', error);
+      return null;
+    }
   }
 
-  // ===== SERIES =====
-  static async getAllSeries() {
-    return await Series.findAll({ order: [['title', 'ASC']] });
+  async getFeaturedReviews() {
+    try {
+      const result = await this.query(
+        `SELECT r.*, u.username 
+         FROM reviews r 
+         LEFT JOIN users u ON r.user_id = u.id 
+         WHERE r.is_featured = TRUE 
+         ORDER BY r.created_at DESC 
+         LIMIT 5`
+      );
+      return result.rows;
+    } catch (error) {
+      console.error('Error en getFeaturedReviews:', error);
+      return [];
+    }
   }
 
-  static async getSeriesById(id) {
-    return await Series.findByPk(id);
-  }
-
-  static async createSeries(seriesData) {
-    return await Series.create(seriesData);
-  }
-
-  // ===== RESEÑAS =====
-  static async createReview(reviewData) {
-    return await Review.create(reviewData);
-  }
-
-  static async getUserReviews(userId) {
-    return await Review.findAll({
-      where: { user_id: userId },
-      order: [['createdAt', 'DESC']]
-    });
-  }
-
-  static async getAllReviews() {
-    return await Review.findAll({
-      include: [{
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'avatar']
-      }],
-      order: [['createdAt', 'DESC']]
-    });
-  }
-
-  static async getFeaturedReviews(limit = 3) {
-    return await Review.findAll({
-      include: [{
-        model: User,
-        as: 'user',
-        attributes: ['id', 'username', 'avatar']
-      }],
-      order: [['createdAt', 'DESC']],
-      limit: limit
-    });
-  }
-
-  // ===== ESTADÍSTICAS =====
-  static async getStats() {
-    const [users, movies, series, reviews] = await Promise.all([
-      User.count(),
-      Movie.count(),
-      Series.count(),
-      Review.count()
-    ]);
-
-    return {
-      users: users || 0,
-      movies: movies || 0,
-      series: series || 0,
-      reviews: reviews || 0
-    };
+  // Verificar conexión
+  async testConnection() {
+    try {
+      const result = await this.query('SELECT NOW() as current_time');
+      return { success: true, time: result.rows[0].current_time };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 }
 
-module.exports = DatabaseService;
+module.exports = new DatabaseService();
