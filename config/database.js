@@ -1,32 +1,40 @@
 const { Sequelize } = require('sequelize');
-const path = require('path');
 
-// SQLite para desarrollo, PostgreSQL para producción (Render)
-const sequelize = process.env.DATABASE_URL 
-  ? new Sequelize(process.env.DATABASE_URL, {
-      dialect: 'postgres',
-      logging: false,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
+// Solo PostgreSQL - más simple y confiable
+const sequelize = new Sequelize(
+  process.env.DATABASE_URL, // Render proporciona esto automáticamente
+  {
+    dialect: 'postgres',
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
       }
-    })
-  : new Sequelize({
-      dialect: 'sqlite',
-      storage: path.join(__dirname, '../data/cinecriticas.db'),
-      logging: false
-    });
+    },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
+  }
+);
 
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    const dbType = process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite';
-    console.log(`✅ Conexión a ${dbType} establecida`);
+    console.log('✅ PostgreSQL connection established');
     return true;
   } catch (error) {
-    console.error('❌ Error conectando:', error.message);
+    console.error('❌ PostgreSQL connection failed:', error.message);
+    
+    // En producción, salir si no puede conectar a la BD
+    if (process.env.NODE_ENV === 'production') {
+      console.log('💥 Cannot start without database in production');
+      process.exit(1);
+    }
+    
     return false;
   }
 };

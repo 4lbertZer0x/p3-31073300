@@ -1,34 +1,36 @@
-// Configurar dotenv solo en desarrollo
 if (process.env.NODE_ENV !== 'production') {
+  try {
     require('dotenv').config();
+    console.log('🔧 Development mode with dotenv');
+  } catch (error) {
+    console.log('⚠️  dotenv not available');
   }
-  
-  const express = require('express');
-  const session = require('express-session');
-  const path = require('path');
-  const { initializeDatabase } = require('./models');
-  const DatabaseService = require('./services/DatabaseService');
-  
-  const app = express();
-  const PORT = process.env.PORT || 3001;
-  
-  // Configuración
-  app.set('view engine', 'ejs');
-  app.set('views', path.join(__dirname, 'views'));
-  app.use(express.static('public'));
-  app.use(express.urlencoded({ extended: true }));
-  app.use(express.json());
-  
-  // Configuración de sesión para producción
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'cinecriticas-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    }
-  }));
+}
+
+const express = require('express');
+const session = require('express-session');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Configuración básica
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Configuración de sesión para producción
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'cinecriticas-production-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
   
   // Middleware para user global
   app.use((req, res, next) => {
