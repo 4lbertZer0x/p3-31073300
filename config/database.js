@@ -1,20 +1,32 @@
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: path.join(__dirname, '../data/cinecriticas.db'),  // ← Aquí se define
-  logging: false,
-});
+// SQLite para desarrollo, PostgreSQL para producción (Render)
+const sequelize = process.env.DATABASE_URL 
+  ? new Sequelize(process.env.DATABASE_URL, {
+      dialect: 'postgres',
+      logging: false,
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      }
+    })
+  : new Sequelize({
+      dialect: 'sqlite',
+      storage: path.join(__dirname, '../data/cinecriticas.db'),
+      logging: false
+    });
 
-// Probar conexión
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Conexión a SQLite establecida correctamente');
+    const dbType = process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite';
+    console.log(`✅ Conexión a ${dbType} establecida`);
     return true;
   } catch (error) {
-    console.error('❌ Error conectando a la base de datos:', error);
+    console.error('❌ Error conectando:', error.message);
     return false;
   }
 };

@@ -15,13 +15,13 @@ const initializeDatabase = async () => {
   try {
     console.log('🔄 Inicializando base de datos...');
     
-    // Probar conexión
     const connected = await testConnection();
     if (!connected) {
-      throw new Error('No se pudo conectar a la base de datos');
+      console.log('❌ No se pudo conectar a la base de datos');
+      return false;
     }
 
-    // Sincronizar modelos (force: false para no borrar datos existentes)
+    // Sincronizar modelos
     await sequelize.sync({ force: false });
     console.log('✅ Modelos sincronizados correctamente');
 
@@ -38,7 +38,6 @@ const initializeDatabase = async () => {
 // Datos de ejemplo
 const seedDatabase = async () => {
   try {
-    // Verificar si ya hay datos
     const userCount = await User.count();
     if (userCount > 0) {
       console.log('✅ La base de datos ya contiene datos');
@@ -71,14 +70,6 @@ const seedDatabase = async () => {
         director: 'Christopher Nolan',
         description: 'Un ladrón que roba secretos corporativos a través de los sueños.',
         rating: 8.8
-      },
-      {
-        title: 'The Dark Knight',
-        year: 2008,
-        genre: 'Acción',
-        director: 'Christopher Nolan',
-        description: 'Batman se enfrenta al Joker en Gotham City.',
-        rating: 9.0
       }
     ]);
 
@@ -91,14 +82,6 @@ const seedDatabase = async () => {
         seasons: 4,
         description: 'Misterios sobrenaturales en un pequeño pueblo.',
         rating: 8.7
-      },
-      {
-        title: 'Breaking Bad',
-        year: 2008,
-        genre: 'Drama',
-        seasons: 5,
-        description: 'Un profesor de química se convierte en narcotraficante.',
-        rating: 9.5
       }
     ]);
 
@@ -108,22 +91,13 @@ const seedDatabase = async () => {
         user_id: users[1].id,
         content_type: 'movie',
         content_id: movies[0].id,
-        title: '¡Increíble!',
+        title: '¡Increíble película!',
         rating: 5,
-        comment: 'Una de las mejores películas que he visto. La trama es fascinante.'
-      },
-      {
-        user_id: users[1].id,
-        content_type: 'series',
-        content_id: series[1].id,
-        title: 'Obra maestra',
-        rating: 5,
-        comment: 'Breaking Bad es simplemente perfecta. La evolución de los personajes es excepcional.'
+        comment: 'Una obra maestra del cine moderno.'
       }
     ]);
 
     console.log('✅ Datos de ejemplo insertados correctamente');
-    console.log(`📊 Resumen: ${users.length} usuarios, ${movies.length} películas, ${series.length} series`);
 
   } catch (error) {
     console.error('❌ Error insertando datos de ejemplo:', error);

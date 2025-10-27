@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-container { 
+            text-align: center; 
+            padding: 2rem;
+        }
+        .error-code { 
+            font-size: 8rem; 
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .error-message { 
+            font-size: 1.5rem; 
+            margin-bottom: 2rem;
+        }
+        .btn { 
+            display: inline-block;
+            background: white; 
+            color: #667eea;
+            padding: 1rem 2rem; 
+            text-decoration: none; 
+            border-radius: 5px;
+            font-weight: bold;
+            transition: transform 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">404</div>
+        <div class="error-message">Página No Encontrada</div>
+        <p>La página que buscas no existe o ha sido movida.</p>
+        <a href="/" class="btn">Volver al Inicio</a>
+    </div>
+</body>
+</html>

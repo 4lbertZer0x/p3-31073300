@@ -68,4 +68,10 @@ User.prototype.getSafeData = function() {
   return userData;
 };
 
+User.prototype.getSafeData = function() {
+  const values = { ...this.get() };
+  delete values.password;
+  return values;
+};
+
 module.exports = User;

@@ -1,7 +1,7 @@
 const { User, Movie, Series, Review } = require('../models');
 
 class DatabaseService {
-  // Usuarios
+  // ===== USUARIOS =====
   static async getUserById(id) {
     return await User.findByPk(id);
   }
@@ -10,17 +10,23 @@ class DatabaseService {
     return await User.findOne({ where: { username } });
   }
 
+  static async getUserByEmail(email) {
+    return await User.findOne({ where: { email } });
+  }
+
   static async createUser(userData) {
-    return await User.create(userData);
+    const user = await User.create(userData);
+    return user.getSafeData();
   }
 
   static async getAllUsers() {
     return await User.findAll({
-      attributes: { exclude: ['password'] }
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']]
     });
   }
 
-  // Películas
+  // ===== PELÍCULAS =====
   static async getAllMovies() {
     return await Movie.findAll({ order: [['title', 'ASC']] });
   }
@@ -29,7 +35,11 @@ class DatabaseService {
     return await Movie.findByPk(id);
   }
 
-  // Series
+  static async createMovie(movieData) {
+    return await Movie.create(movieData);
+  }
+
+  // ===== SERIES =====
   static async getAllSeries() {
     return await Series.findAll({ order: [['title', 'ASC']] });
   }
@@ -38,7 +48,11 @@ class DatabaseService {
     return await Series.findByPk(id);
   }
 
-  // Reseñas
+  static async createSeries(seriesData) {
+    return await Series.create(seriesData);
+  }
+
+  // ===== RESEÑAS =====
   static async createReview(reviewData) {
     return await Review.create(reviewData);
   }
@@ -55,22 +69,39 @@ class DatabaseService {
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'username']
+        attributes: ['id', 'username', 'avatar']
       }],
       order: [['createdAt', 'DESC']]
     });
   }
 
-  static async getFeaturedReviews() {
+  static async getFeaturedReviews(limit = 3) {
     return await Review.findAll({
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'username']
+        attributes: ['id', 'username', 'avatar']
       }],
       order: [['createdAt', 'DESC']],
-      limit: 3
+      limit: limit
     });
+  }
+
+  // ===== ESTADÍSTICAS =====
+  static async getStats() {
+    const [users, movies, series, reviews] = await Promise.all([
+      User.count(),
+      Movie.count(),
+      Series.count(),
+      Review.count()
+    ]);
+
+    return {
+      users: users || 0,
+      movies: movies || 0,
+      series: series || 0,
+      reviews: reviews || 0
+    };
   }
 }
 
