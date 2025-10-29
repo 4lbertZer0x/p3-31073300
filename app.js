@@ -1,10 +1,10 @@
-// app.js - VERSIÓN ACTUALIZADA Y OPTIMIZADA
-console.log('🚀 Iniciando CineCríticas...');
+// app.js - VERSIÓN ACTUALIZADA CON JWT
+console.log('🚀 Iniciando CineCríticas con JWT...');
 
 // Configuración
 const isProduction = process.env.NODE_ENV === 'production';
 
-console.log('=== CINECRITICAS ===');
+console.log('=== CINECRITICAS JWT ===');
 console.log('Node version:', process.version);
 console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('PORT:', process.env.PORT || 3000);
@@ -26,6 +26,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const fs = require('fs');
+const jwt = require('jsonwebtoken'); // ✅ AGREGADO: JWT
 
 // Importar servicios SQLite
 const { initializeDatabase } = require('./models');
@@ -36,7 +37,50 @@ const app = express();
 // PUERTO
 const PORT = process.env.PORT || 3000;
 
-// ================= CONFIGURACIÓN MULTER =================
+// ================= CONFIGURACIÓN JWT =================
+const JWT_SECRET = process.env.JWT_SECRET || 'cinecriticas-jwt-secret-2024-super-seguro';
+console.log('🔐 JWT Configurado');
+
+// ================= MIDDLEWARES JWT =================
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Acceso denegado. Token requerido.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(400).json({ error: 'Token inválido.' });
+  }
+};
+
+const requireAuthAPI = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Token inválido' });
+  }
+};
+
+const requireAdminAPI = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Se requieren permisos de administrador' });
+  }
+  next();
+};
+
 // ================= CONFIGURACIÓN MULTER =================
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -58,7 +102,6 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB
   },
   fileFilter: function (req, file, cb) {
-    // CORREGIDO: Mejor validación de tipos de archivo
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
@@ -66,8 +109,6 @@ const upload = multer({
     }
   }
 });
-
-
 
 // ================= CONFIGURACIÓN EXPRESS =================
 app.set('view engine', 'ejs');
@@ -94,9 +135,26 @@ if (isProduction) {
 
 app.use(session(sessionConfig));
 
-// Middleware para user global
+// Middleware para user global (compatibilidad con sesiones y JWT)
 app.use((req, res, next) => {
-  res.locals.user = req.session.user || null;
+  // Prioridad a sesiones para vistas EJS
+  if (req.session.user) {
+    res.locals.user = req.session.user;
+  } 
+  // Si no hay sesión pero hay token JWT en cookies, usarlo para vistas
+  else if (req.cookies?.token) {
+    try {
+      const decoded = jwt.verify(req.cookies.token, JWT_SECRET);
+      res.locals.user = decoded;
+      req.session.user = decoded; // Sincronizar con sesión para compatibilidad
+    } catch (error) {
+      // Token inválido, limpiar cookie
+      res.clearCookie('token');
+    }
+  } else {
+    res.locals.user = null;
+  }
+  
   res.locals.currentPath = req.path;
   next();
 });
@@ -128,7 +186,8 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    auth: 'JWT + Sessions Hybrid'
   });
 });
 
@@ -193,6 +252,7 @@ app.get('/login', (req, res) => {
   });
 });
 
+// ✅ LOGIN ACTUALIZADO CON JWT
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -214,6 +274,19 @@ app.post('/login', async (req, res) => {
       const isValidPassword = await user.verifyPassword(password);
       
       if (isValidPassword) {
+        // ✅ CREAR TOKEN JWT
+        const token = jwt.sign(
+          {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+          },
+          JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+
+        // Mantener sesión para compatibilidad con vistas EJS
         req.session.user = {
           id: user.id,
           username: user.username,
@@ -221,7 +294,29 @@ app.post('/login', async (req, res) => {
           role: user.role
         };
         
-        console.log(`✅ Login exitoso: ${user.username} (${user.role})`);
+        // Setear cookie con token JWT
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: isProduction,
+          maxAge: 24 * 60 * 60 * 1000
+        });
+        
+        console.log(`✅ Login exitoso: ${user.username} (${user.role}) - JWT Generado`);
+        
+        // Si es una petición API, responder con token
+        if (req.headers.accept?.includes('application/json')) {
+          return res.json({
+            success: true,
+            message: 'Login exitoso',
+            token: token,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role
+            }
+          });
+        }
         
         const redirectTo = req.session.returnTo || (user.role === 'admin' ? '/admin' : '/');
         delete req.session.returnTo;
@@ -241,6 +336,11 @@ app.post('/login', async (req, res) => {
     
   } catch (error) {
     console.error('Error en login:', error);
+    
+    if (req.headers.accept?.includes('application/json')) {
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+    
     res.render('login', {
       title: 'Iniciar Sesión - CineCríticas',
       error: 'Error del servidor. Intenta nuevamente.',
@@ -260,6 +360,7 @@ app.get('/register', (req, res) => {
     user: null
   });
 });
+
 app.post('/register', async (req, res) => {
   try {
     const { username, email, password, confirmPassword } = req.body;
@@ -269,7 +370,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'Todos los campos son requeridos',
-        success: null, // ← AGREGAR
+        success: null,
         username: username,
         email: email,
         user: null
@@ -280,7 +381,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'Las contraseñas no coinciden',
-        success: null, // ← AGREGAR
+        success: null,
         username: username,
         email: email,
         user: null
@@ -291,7 +392,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'El nombre de usuario debe tener entre 3 y 30 caracteres',
-        success: null, // ← AGREGAR
+        success: null,
         username: username,
         email: email,
         user: null
@@ -302,7 +403,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'La contraseña debe tener al menos 6 caracteres',
-        success: null, // ← AGREGAR
+        success: null,
         username: username,
         email: email,
         user: null
@@ -334,7 +435,7 @@ app.post('/register', async (req, res) => {
     res.render('register', {
       title: 'Registrarse - CineCríticas',
       error: 'Error al registrar usuario. El usuario o email ya existen.',
-      success: null, // ← AGREGAR
+      success: null,
       username: req.body.username,
       email: req.body.email,
       user: null
@@ -342,8 +443,23 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// ✅ LOGOUT ACTUALIZADO CON JWT
 app.post('/logout', (req, res) => {
   req.session.destroy(() => {
+    res.clearCookie('token'); // ✅ Limpiar token JWT
+    
+    if (req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true, message: 'Logout exitoso' });
+    }
+    
+    res.redirect('/');
+  });
+});
+
+// Para vistas EJS
+app.post('/logout-view', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('token'); // ✅ Limpiar token JWT
     res.redirect('/');
   });
 });
@@ -898,6 +1014,7 @@ app.post('/admin/movies/new', requireAdmin, upload.single('poster_image'), async
     });
   }
 });
+
 // Crear nueva película (POST)
 app.post('/admin/movies/new', requireAdmin, async (req, res) => {
   try {
@@ -1014,6 +1131,94 @@ app.post('/admin/movies/:id/activate', requireAdmin, async (req, res) => {
   }
 });
 
+// ================= API ROUTES CON JWT =================
+
+// API para obtener perfil de usuario
+app.get('/api/user/profile', requireAuthAPI, async (req, res) => {
+  try {
+    const user = await DatabaseService.getUserById(req.user.id);
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// API para obtener reseñas
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const reviews = await DatabaseService.getAllReviews();
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// API para crear reseña
+app.post('/api/reviews', requireAuthAPI, async (req, res) => {
+  try {
+    const { title, content, rating, movie_title } = req.body;
+    
+    if (!title || !content || !rating || !movie_title) {
+      return res.status(400).json({ error: 'Todos los campos son requeridos' });
+    }
+
+    const numericRating = parseInt(rating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+      return res.status(400).json({ error: 'La calificación debe ser un número entre 1 y 5' });
+    }
+
+    const poster_url = '/images/default-poster.jpg';
+    
+    const review = await DatabaseService.createReview({
+      title: title.trim(),
+      content: content.trim(),
+      rating: numericRating,
+      movie_title: movie_title.trim(),
+      poster_url,
+      user_id: req.user.id
+    });
+    
+    res.json({
+      success: true,
+      message: 'Reseña publicada exitosamente',
+      review: review
+    });
+  } catch (error) {
+    console.error('Error creando reseña:', error);
+    res.status(500).json({ error: 'Error creando la reseña' });
+  }
+});
+
+// API para administración (solo admin)
+app.get('/api/admin/users', requireAuthAPI, requireAdminAPI, async (req, res) => {
+  try {
+    const users = await DatabaseService.getAllUsers();
+    res.json(users.map(user => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at
+    })));
+  } catch (error) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// API para verificar token
+app.get('/api/auth/verify', requireAuthAPI, (req, res) => {
+  res.json({
+    valid: true,
+    user: req.user
+  });
+});
+
 // ================= MANEJO DE ERRORES =================
 
 app.use((req, res) => {
@@ -1036,7 +1241,7 @@ app.use((error, req, res, next) => {
 
 const startServer = async () => {
   try {
-    console.log('🚀 Iniciando servidor...');
+    console.log('🚀 Iniciando servidor con JWT...');
     
     // Inicializar base de datos
     const dbSuccess = await initializeDatabase();
@@ -1059,12 +1264,16 @@ const startServer = async () => {
       const debugInfo = await DatabaseService.getDebugInfo();
       const movies = await DatabaseService.getAllMovies();
       console.log(`📊 Estado de la base de datos: ${debugInfo.database.usersCount} usuarios, ${movies.length} películas/series, ${debugInfo.database.reviewsCount} reseñas`);
+      console.log('🔐 Sistema de autenticación: JWT + Sesiones (Híbrido)');
     }
     
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🎬 Servidor corriendo en puerto: ${PORT}`);
-      console.log('✅ ¡CineCríticas está listo!');
+      console.log('✅ ¡CineCríticas con JWT está listo!');
       console.log('🌐 Accede en: http://localhost:' + PORT);
+      console.log('🔐 API Health: http://localhost:' + PORT + '/health');
+      console.log('🔐 Verificar Token: http://localhost:' + PORT + '/api/auth/verify');
+      console.log('📱 API Reviews: http://localhost:' + PORT + '/api/reviews');
       console.log('🐛 Debug: http://localhost:' + PORT + '/debug-users');
       console.log('🎬 Debug Películas: http://localhost:' + PORT + '/debug-movies');
       console.log('🔄 Reset DB: http://localhost:' + PORT + '/reset-db (solo desarrollo)');
