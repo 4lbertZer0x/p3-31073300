@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .movie-header {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('/images/cinema-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+        .review-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .review-card:hover {
+            transform: translateY(-5px);
+        }
+        .rating-stars {
+            color: #ffc107;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+        .rating-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .rating-fill {
+            background: #ffc107;
+            height: 8px;
+            border-radius: 10px;
+        }
+        .featured-badge {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-film"></i> CineCríticas
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <% if (user) { %>
+                    <a class="nav-link" href="/reviews/new">
+                        <i class="fas fa-plus-circle"></i> Crear Reseña
+                    </a>
+                <% } else { %>
+                    <a class="nav-link" href="/login">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Encabezado de la película -->
+    <div class="movie-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 fw-bold"><%= movieTitle %></h1>
+                    <p class="lead">Todas las reseñas y opiniones de la comunidad</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="stats-card">
+                        <h3><%= avgRating %></h3>
+                        <div class="rating-stars mb-2">
+                            <% for (let i = 0; i < 5; i++) { %>
+                                <% if (i < Math.floor(avgRating)) { %>
+                                    <i class="fas fa-star"></i>
+                                <% } else if (i < avgRating) { %>
+                                    <i class="fas fa-star-half-alt"></i>
+                                <% } else { %>
+                                    <i class="far fa-star"></i>
+                                <% } %>
+                            <% } %>
+                        </div>
+                        <p class="mb-0"><%= totalReviews %> reseña<%= totalReviews !== 1 ? 's' : '' %></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <!-- Columna principal - Reseñas -->
+            <div class="col-lg-8">
+                <!-- Botón crear reseña -->
+                <% if (user) { %>
+                <div class="d-grid gap-2 mb-4">
+                    <a href="/reviews/new?movie=<%= encodeURIComponent(movieTitle) %>" class="btn btn-success btn-lg">
+                        <i class="fas fa-plus-circle"></i> Escribir Reseña de "<%= movieTitle %>"
+                    </a>
+                </div>
+                <% } else { %>
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i> 
+                    <a href="/login" class="alert-link">Inicia sesión</a> para escribir tu propia reseña
+                </div>
+                <% } %>
+
+                <!-- Estadísticas rápidas -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3><%= totalReviews %></h3>
+                                <p class="text-muted mb-0">Reseñas totales</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3><%= avgRating %></h3>
+                                <p class="text-muted mb-0">Calificación promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3><%= featuredCount %></h3>
+                                <p class="text-muted mb-0">Reseñas destacadas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribución de ratings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar"></i> Distribución de Calificaciones
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% [5,4,3,2,1].forEach(rating => { %>
+                            <div class="row align-items-center mb-2">
+                                <div class="col-2">
+                                    <span class="rating-stars">
+                                        <% for (let i = 0; i < 5; i++) { %>
+                                            <% if (i < rating) { %>
+                                                <i class="fas fa-star"></i>
+                                            <% } else { %>
+                                                <i class="far fa-star"></i>
+                                            <% } %>
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <div class="col-8">
+                                    <div class="rating-bar">
+                                        <div class="rating-fill" 
+                                             style="width: <%= (ratingDistribution[rating] / totalReviews * 100) %>%">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-end">
+                                    <small class="text-muted"><%= ratingDistribution[rating] %> (<%= Math.round(ratingDistribution[rating] / totalReviews * 100) %>%)</small>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+
+                <!-- Lista de reseñas -->
+                <h3 class="mb-4">
+                    <i class="fas fa-comments"></i> 
+                    Reseñas de la Comunidad 
+                    <span class="badge bg-primary"><%= totalReviews %></span>
+                </h3>
+
+                <% if (reviews.length === 0) { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                        <h4>No hay reseñas todavía</h4>
+                        <p class="text-muted">Sé el primero en escribir una reseña para esta película</p>
+                        <% if (user) { %>
+                            <a href="/reviews/new?movie=<%= encodeURIComponent(movieTitle) %>" class="btn btn-success">
+                                <i class="fas fa-plus-circle"></i> Escribir Primera Reseña
+                            </a>
+                        <% } %>
+                    </div>
+                <% } else { %>
+                    <% reviews.forEach((review, index) => { %>
+                    <div class="card review-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <!-- Header de la reseña -->
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <h5 class="card-title mb-1">
+                                                <%= review.title %>
+                                                <% if (review.is_featured) { %>
+                                                    <span class="featured-badge ms-2">
+                                                        <i class="fas fa-star"></i> Destacada
+                                                    </span>
+                                                <% } %>
+                                            </h5>
+                                            <div class="rating-stars mb-2">
+                                                <% for (let i = 0; i < 5; i++) { %>
+                                                    <% if (i < review.rating) { %>
+                                                        <i class="fas fa-star"></i>
+                                                    <% } else { %>
+                                                        <i class="far fa-star"></i>
+                                                    <% } %>
+                                                <% } %>
+                                                <span class="text-muted ms-2">(<%= review.rating %>/5)</span>
+                                            </div>
+                                        </div>
+                                        <% if (user && user.role === 'admin') { %>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-cog"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" 
+                                                       href="/admin/reviews/<%= review.id %>/edit">
+                                                        <i class="fas fa-edit"></i> Editar
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <form action="/admin/reviews/<%= review.id %>/delete" 
+                                                          method="POST" class="d-inline">
+                                                        <button type="submit" 
+                                                                class="dropdown-item text-danger"
+                                                                onclick="return confirm('¿Eliminar esta reseña?')">
+                                                            <i class="fas fa-trash"></i> Eliminar
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <% } %>
+                                    </div>
+
+                                    <!-- Contenido de la reseña -->
+                                    <p class="card-text"><%= review.content %></p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <!-- Información del usuario -->
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="user-avatar me-3">
+                                            <%= review.username.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <div>
+                                            <strong><%= review.username %></strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <%= new Date(review.created_at).toLocaleDateString('es-ES', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                }) %>
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Acciones -->
+                                    <div class="d-grid gap-2">
+                                        <% if (user && user.id === review.user_id) { %>
+                                            <a href="/admin/reviews/<%= review.id %>/edit" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit"></i> Editar Mi Reseña
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } %>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Botón crear reseña móvil -->
+                <% if (user) { %>
+                <div class="card mb-4 d-lg-none">
+                    <div class="card-body text-center">
+                        <a href="/reviews/new?movie=<%= encodeURIComponent(movieTitle) %>" 
+                           class="btn btn-success w-100">
+                            <i class="fas fa-plus-circle"></i> Escribir Reseña
+                        </a>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Estadísticas resumen -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie"></i> Resumen
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Calificación Promedio:</strong>
+                            <div class="rating-stars">
+                                <% for (let i = 0; i < 5; i++) { %>
+                                    <% if (i < Math.floor(avgRating)) { %>
+                                        <i class="fas fa-star"></i>
+                                    <% } else if (i < avgRating) { %>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    <% } else { %>
+                                        <i class="far fa-star"></i>
+                                    <% } %>
+                                <% } %>
+                                <span class="ms-2"><%= avgRating %></span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Total de Reseñas:</strong>
+                            <span class="float-end"><%= totalReviews %></span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Reseñas Destacadas:</strong>
+                            <span class="float-end"><%= featuredCount %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones rápidas -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt"></i> Acciones
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> Volver al Inicio
+                            </a>
+                            <% if (user) { %>
+                                <a href="/reviews/new?movie=<%= encodeURIComponent(movieTitle) %>" 
+                                   class="btn btn-success">
+                                    <i class="fas fa-plus-circle"></i> Nueva Reseña
+                                </a>
+                            <% } else { %>
+                                <a href="/login" class="btn btn-outline-success">
+                                    <i class="fas fa-sign-in-alt"></i> Login para Reseñar
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">CineCríticas &copy; 2024 - Compartiendo opiniones cinematográficas</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

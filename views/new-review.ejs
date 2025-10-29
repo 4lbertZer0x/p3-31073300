@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Reseña - CineCríticas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: bold;
+        }
+        .poster-preview {
+            max-width: 200px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .rating-stars {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .rating-stars .star {
+            color: #ddd;
+            transition: color 0.2s;
+        }
+        .rating-stars .star:hover,
+        .rating-stars .star.active {
+            color: #ffc107;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4299e1;
+            box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+        }
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+        }
+        .file-upload {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .file-upload:hover {
+            border-color: #4299e1;
+            background-color: #f8f9fa;
+        }
+        .file-upload.dragover {
+            border-color: #4299e1;
+            background-color: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-film"></i> CineCríticas
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-arrow-left"></i> Volver al Inicio
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h2 class="card-title mb-0">
+                            <i class="fas fa-plus-circle"></i> Crear Nueva Reseña
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Mensajes -->
+                        <% if (success) { %>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> <%= success %>
+                            </div>
+                        <% } %>
+                        
+                        <% if (error) { %>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i> <%= error %>
+                            </div>
+                        <% } %>
+
+                        <form action="/reviews/new" method="POST" enctype="multipart/form-data">
+                            <div class="row">
+                                <!-- Columna izquierda: Formulario -->
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">
+                                            <i class="fas fa-heading"></i> Título de la Reseña:
+                                        </label>
+                                        <input type="text" class="form-control" id="title" name="title" 
+                                               required 
+                                               placeholder="Ej: Increíble película de acción"
+                                               value="<%= locals.formData ? locals.formData.title : '' %>">
+                                        <div class="form-text">Un título llamativo para tu reseña</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="movie_title" class="form-label">
+                                            <i class="fas fa-film"></i> Título de la Película/Serie:
+                                        </label>
+                                        <input type="text" class="form-control" id="movie_title" name="movie_title" 
+                                               required 
+                                               placeholder="Ej: Avengers: Endgame"
+                                               value="<%= locals.formData ? locals.formData.movie_title : '' %>">
+                                        <div class="form-text">Nombre de la película o serie que estás reseñando</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-star"></i> Calificación:
+                                        </label>
+                                        <div class="rating-stars mb-2" id="ratingStars">
+                                            <span class="star" data-rating="1">★</span>
+                                            <span class="star" data-rating="2">★</span>
+                                            <span class="star" data-rating="3">★</span>
+                                            <span class="star" data-rating="4">★</span>
+                                            <span class="star" data-rating="5">★</span>
+                                        </div>
+                                        <input type="hidden" id="rating" name="rating" value="5" required>
+                                        <div class="form-text">Haz clic en las estrellas para seleccionar la calificación (1-5)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="poster_image" class="form-label">
+                                            <i class="fas fa-image"></i> Póster de la Película/Serie (Opcional):
+                                        </label>
+                                        <div class="file-upload" id="fileUploadArea">
+                                            <div class="mb-2">
+                                                <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
+                                            </div>
+                                            <p class="mb-2">Haz clic para seleccionar o arrastra una imagen</p>
+                                            <small class="text-muted d-block">Formatos: JPG, PNG, GIF, WEBP (Máx. 5MB)</small>
+                                            <input type="file" class="form-control d-none" id="poster_image" name="poster_image" 
+                                                   accept="image/*">
+                                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="document.getElementById('poster_image').click()">
+                                                <i class="fas fa-folder-open"></i> Seleccionar Archivo
+                                            </button>
+                                        </div>
+                                        <div id="fileName" class="mt-2 text-success"></div>
+                                        <div class="form-text">Si no subes una imagen, se usará el póster por defecto</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Columna derecha: Vista previa -->
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h5><i class="fas fa-eye"></i> Vista Previa</h5>
+                                        <img id="posterPreview" 
+                                             src="/images/default-poster.jpg" 
+                                             class="poster-preview img-fluid mb-3"
+                                             onerror="this.src='/images/default-poster.jpg'"
+                                             alt="Vista previa del póster">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 id="previewTitle" class="card-title">Título de la Reseña</h6>
+                                                <p class="card-text">
+                                                    <small class="text-muted" id="previewMovie">Título de la Película</small>
+                                                </p>
+                                                <div id="previewRating" class="text-warning">★★★★★</div>
+                                                <small class="text-muted">Por: <%= user.username %></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="content" class="form-label">
+                                    <i class="fas fa-comment"></i> Tu Reseña:
+                                </label>
+                                <textarea class="form-control" id="content" name="content" 
+                                          rows="8" 
+                                          required 
+                                          placeholder="Comparte tu opinión sobre la película o serie... ¿Qué te gustó? ¿Qué no te gustó? ¿Recomendarías verla?"><%= locals.formData ? locals.formData.content : '' %></textarea>
+                                <div class="form-text">Sé detallado en tu reseña. Mínimo 50 caracteres.</div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-success me-md-2">
+                                    <i class="fas fa-paper-plane"></i> Publicar Reseña
+                                </button>
+                                <a href="/" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">CineCríticas &copy; 2024 - Comparte tu opinión con la comunidad</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sistema de rating con estrellas
+            const stars = document.querySelectorAll('.star');
+            const ratingInput = document.getElementById('rating');
+            const previewRating = document.getElementById('previewRating');
+            
+            // Inicializar con 5 estrellas
+            updateStars(5);
+            updateRatingPreview(5);
+            
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = this.getAttribute('data-rating');
+                    ratingInput.value = rating;
+                    updateStars(rating);
+                    updateRatingPreview(rating);
+                });
+            });
+            
+            function updateStars(rating) {
+                stars.forEach(star => {
+                    if (star.getAttribute('data-rating') <= rating) {
+                        star.classList.add('active');
+                    } else {
+                        star.classList.remove('active');
+                    }
+                });
+            }
+            
+            function updateRatingPreview(rating) {
+                let starsHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    starsHtml += i <= rating ? '★' : '☆';
+                }
+                previewRating.innerHTML = starsHtml;
+            }
+            
+            // Manejo de subida de archivos
+            const fileInput = document.getElementById('poster_image');
+            const fileUploadArea = document.getElementById('fileUploadArea');
+            const fileName = document.getElementById('fileName');
+            const posterPreview = document.getElementById('posterPreview');
+            
+            fileUploadArea.addEventListener('click', function(e) {
+                if (e.target !== fileInput) {
+                    fileInput.click();
+                }
+            });
+            
+            fileUploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            fileUploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('dragover');
+            });
+            
+            fileUploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelection(e.dataTransfer.files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    handleFileSelection(this.files[0]);
+                }
+            });
+            
+            function handleFileSelection(file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor, selecciona un archivo de imagen válido.');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. Máximo 5MB.');
+                    return;
+                }
+                
+                fileName.innerHTML = `<i class="fas fa-check"></i> Archivo seleccionado: ${file.name}`;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    posterPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Vista previa en tiempo real
+            const titleInput = document.getElementById('title');
+            const movieInput = document.getElementById('movie_title');
+            const previewTitle = document.getElementById('previewTitle');
+            const previewMovie = document.getElementById('previewMovie');
+            
+            titleInput.addEventListener('input', function() {
+                previewTitle.textContent = this.value || 'Título de la Reseña';
+            });
+            
+            movieInput.addEventListener('input', function() {
+                previewMovie.textContent = this.value || 'Título de la Película';
+            });
+            
+            // Validación de contenido mínimo
+            const contentInput = document.getElementById('content');
+            contentInput.addEventListener('input', function() {
+                if (this.value.length < 50 && this.value.length > 0) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

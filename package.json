@@ -1,36 +1,23 @@
 {
   "name": "cinecriticas",
   "version": "1.0.0",
-  "description": "Plataforma de críticas de películas y series",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "npm install"
+    "build": "echo 'No build step needed for SQLite'"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
-    "connect-pg-simple": "^10.0.0",
-    "dotenv": "^17.2.3",
-    "ejs": "^3.1.10",
-    "express": "^5.1.0",
-    "express-session": "^1.18.2",
-    "pg": "^8.16.3",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7"
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "express-session-sqlite": "^2.1.1",
+    "multer": "^2.0.2",
+    "sqlite": "^4.2.1",
+    "sqlite3": "^5.1.7"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "keywords": [
-    "cine",
-    "críticas",
-    "películas",
-    "series"
-  ],
-  "author": "Tu Nombre",
-  "license": "MIT",
-  "devDependencies": {
-    "nodemon": "^3.1.10"
   }
 }

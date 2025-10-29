@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= review.movie_title %> - CineCríticas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+            text-decoration: none;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Movie Hero Section */
+        .movie-hero {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #2d3748;
+        }
+
+        .movie-poster {
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .movie-poster:hover {
+            transform: scale(1.05);
+        }
+
+        .movie-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .movie-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .movie-meta {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffd700;
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+
+        .review-count {
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .movie-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        /* Review Content */
+        .review-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #2d3748;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .review-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .review-meta {
+            text-align: right;
+        }
+
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .review-date {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .review-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .review-text p {
+            margin-bottom: 15px;
+        }
+
+        /* Other Reviews Section */
+        .other-reviews {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #2d3748;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reviews-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .review-item {
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .review-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .review-item-author {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .review-item-rating {
+            color: #ffc107;
+        }
+
+        .review-item-content {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .movie-hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .movie-poster {
+                max-width: 250px;
+                margin: 0 auto;
+            }
+
+            .movie-meta {
+                justify-content: center;
+            }
+
+            .review-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .review-meta {
+                text-align: left;
+            }
+
+            .header-top {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        /* Featured Badge */
+        .featured-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+        }
+
+        .warning-message {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-top">
+                <a href="/" class="logo">
+                    <i class="fas fa-film"></i>
+                    <span>CineCríticas</span>
+                </a>
+                <div>
+                    <a href="/" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i>Volver al Inicio
+                    </a>
+                    <a href="/reviews/new" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>Nueva Reseña
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Advertencia de sistema cambiado -->
+        <div class="warning-message">
+            <i class="fas fa-info-circle"></i>
+            <strong>Nota:</strong> Ahora todas las reseñas de "<%= review.movie_title %>" se muestran juntas en una sola página.
+            <a href="/movie/<%= encodeURIComponent(review.movie_title) %>" style="color: #4299e1; margin-left: 10px;">
+                Ver todas las reseñas de esta película
+            </a>
+        </div>
+
+        <!-- Movie Hero Section -->
+        <section class="movie-hero">
+            <div class="movie-poster-container">
+                <img src="<%= review.poster_url || '/images/default-poster.jpg' %>" 
+                     alt="<%= review.movie_title %>" 
+                     class="movie-poster"
+                     onerror="this.src='/images/default-poster.jpg'">
+            </div>
+            
+            <div class="movie-info">
+                <h1 class="movie-title">
+                    <%= review.movie_title %>
+                    <% if (review.is_featured) { %>
+                        <span class="featured-badge">
+                            <i class="fas fa-star"></i>DESTACADA
+                        </span>
+                    <% } %>
+                </h1>
+                
+                <div class="movie-meta">
+                    <div class="rating">
+                        <i class="fas fa-star"></i>
+                        <span><%= review.rating %>/5</span>
+                    </div>
+                    <div class="review-count">
+                        <i class="fas fa-comment"></i>
+                        <!-- Mostrar información básica si está disponible -->
+                        <% if (typeof totalReviews !== 'undefined') { %>
+                            <%= totalReviews %> reseñas
+                        <% } else { %>
+                            <a href="/movie/<%= encodeURIComponent(review.movie_title) %>" style="color: #718096;">
+                                Ver todas las reseñas
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Estadísticas condicionales -->
+                <% if (typeof totalReviews !== 'undefined' && typeof avgRating !== 'undefined') { %>
+                <div class="movie-stats">
+                    <div class="stat">
+                        <div class="stat-number"><%= avgRating %></div>
+                        <div class="stat-label">Rating Promedio</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number"><%= totalReviews %></div>
+                        <div class="stat-label">Total Reseñas</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number"><%= featuredCount || 0 %></div>
+                        <div class="stat-label">Destacadas</div>
+                    </div>
+                </div>
+                <% } %>
+
+                <div style="margin-top: 20px;">
+                    <a href="/reviews/new?movie=<%= encodeURIComponent(review.movie_title) %>" 
+                       class="btn btn-primary">
+                        <i class="fas fa-edit"></i>Escribir Reseña
+                    </a>
+                    <a href="/movie/<%= encodeURIComponent(review.movie_title) %>" 
+                       class="btn btn-secondary" style="margin-left: 10px;">
+                        <i class="fas fa-list"></i>Ver Todas las Reseñas
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Review Content -->
+        <section class="review-content">
+            <div class="review-header">
+                <div>
+                    <h2 class="review-title"><%= review.title %></h2>
+                    <div class="rating" style="background: transparent; color: #ffc107; padding: 0; margin-top: 5px;">
+                        <% for (let i = 0; i < 5; i++) { %>
+                            <% if (i < review.rating) { %>
+                                <i class="fas fa-star"></i>
+                            <% } else { %>
+                                <i class="far fa-star"></i>
+                            <% } %>
+                        <% } %>
+                        <span style="color: #718096; margin-left: 5px;">(<%= review.rating %>/5)</span>
+                    </div>
+                </div>
+                <div class="review-meta">
+                    <div class="review-author">
+                        <i class="fas fa-user"></i>
+                        <%= review.username %>
+                    </div>
+                    <div class="review-date">
+                        <i class="fas fa-calendar"></i>
+                        <%= new Date(review.created_at).toLocaleDateString('es-ES', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        }) %>
+                    </div>
+                    <% if (review.updated_at && review.updated_at !== review.created_at) { %>
+                    <div class="review-date">
+                        <i class="fas fa-edit"></i>
+                        Editado: <%= new Date(review.updated_at).toLocaleDateString('es-ES', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        }) %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="review-text">
+                <!-- Convertir saltos de línea en párrafos -->
+                <% const paragraphs = review.content.split('\n').filter(p => p.trim()); %>
+                <% paragraphs.forEach(paragraph => { %>
+                    <p><%= paragraph %></p>
+                <% }); %>
+            </div>
+
+            <!-- Acciones para el autor o admin -->
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                <a href="/reviews/new?movie=<%= encodeURIComponent(review.movie_title) %>" 
+                   class="btn btn-primary">
+                    <i class="fas fa-edit"></i>Escribir Tu Reseña
+                </a>
+                <a href="/movie/<%= encodeURIComponent(review.movie_title) %>" 
+                   class="btn btn-secondary">
+                    <i class="fas fa-list"></i>Ver Todas las Reseñas
+                </a>
+                <% if (user && (user.id === review.user_id || user.role === 'admin')) { %>
+                    <a href="/admin/reviews/<%= review.id %>/edit" 
+                       class="btn btn-secondary" style="background: #38a169;">
+                        <i class="fas fa-cog"></i>Editar Reseña
+                    </a>
+                <% } %>
+            </div>
+        </section>
+
+        <!-- Other Reviews Section - Solo si hay otras reseñas -->
+        <% if (typeof otherReviews !== 'undefined' && otherReviews && otherReviews.length > 0) { %>
+        <section class="other-reviews">
+            <h3 class="section-title">
+                <i class="fas fa-comments"></i>Otras Reseñas de "<%= review.movie_title %>"
+                <span style="font-size: 1rem; color: #718096; margin-left: 10px;">
+                    (<%= otherReviews.length %> más)
+                </span>
+            </h3>
+            
+            <div class="reviews-list">
+                <% otherReviews.forEach(otherReview => { %>
+                    <div class="review-item">
+                        <div class="review-item-header">
+                            <div class="review-item-author">
+                                <i class="fas fa-user"></i>
+                                <%= otherReview.username %>
+                                <% if (otherReview.is_featured) { %>
+                                    <span class="featured-badge" style="margin-left: 8px; font-size: 0.7rem;">
+                                        <i class="fas fa-star"></i>DESTACADA
+                                    </span>
+                                <% } %>
+                            </div>
+                            <div class="review-item-rating">
+                                <%= '★'.repeat(otherReview.rating) %><%= '☆'.repeat(5 - otherReview.rating) %>
+                                (<%= otherReview.rating %>/5)
+                            </div>
+                        </div>
+                        <div class="review-item-content">
+                            <%= otherReview.content.length > 150 ? 
+                                otherReview.content.substring(0, 150) + '...' : 
+                                otherReview.content %>
+                        </div>
+                        <% if (otherReview.content.length > 150) { %>
+                            <a href="/review/<%= otherReview.id %>" style="color: #4299e1; font-size: 0.9rem; display: inline-block; margin-top: 10px;">
+                                Leer reseña completa...
+                            </a>
+                        <% } %>
+                        <div style="margin-top: 10px; font-size: 0.8rem; color: #718096;">
+                            <i class="fas fa-calendar"></i>
+                            <%= new Date(otherReview.created_at).toLocaleDateString('es-ES') %>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/movie/<%= encodeURIComponent(review.movie_title) %>" 
+                   class="btn btn-primary">
+                    <i class="fas fa-list"></i>Ver Todas las <%= otherReviews.length + 1 %> Reseñas
+                </a>
+            </div>
+        </section>
+        <% } else { %>
+            <!-- Mensaje cuando no hay otras reseñas -->
+            <section class="other-reviews">
+                <h3 class="section-title">
+                    <i class="fas fa-comments"></i>Más Reseñas de "<%= review.movie_title %>"
+                </h3>
+                <div style="text-align: center; padding: 40px; color: #718096;">
+                    <i class="fas fa-comment-slash fa-2x mb-3"></i>
+                    <p>Esta es la única reseña de esta película por ahora.</p>
+                    <a href="/reviews/new?movie=<%= encodeURIComponent(review.movie_title) %>" 
+                       class="btn btn-primary">
+                        <i class="fas fa-edit"></i>Sé el primero en escribir una reseña
+                    </a>
+                </div>
+            </section>
+        <% } %>
+    </div>
+
+    <script>
+        // Efectos de hover para la imagen
+        const poster = document.querySelector('.movie-poster');
+        if (poster) {
+            poster.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+            });
+            
+            poster.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        }
+
+        // Smooth scroll para enlaces internos
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Mostrar mensaje si JavaScript está deshabilitado
+        document.addEventListener('DOMContentLoaded', function() {
+            const warningMessage = document.querySelector('.warning-message');
+            if (warningMessage) {
+                setTimeout(() => {
+                    warningMessage.style.opacity = '0.8';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

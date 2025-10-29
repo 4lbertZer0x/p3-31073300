@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Reseña - CineCríticas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: bold;
+        }
+        .poster-preview {
+            max-width: 200px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .rating-stars {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .rating-stars .star {
+            color: #ddd;
+            transition: color 0.2s;
+        }
+        .rating-stars .star:hover,
+        .rating-stars .star.active {
+            color: #ffc107;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4299e1;
+            box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+        }
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+        }
+        .file-upload {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .file-upload:hover {
+            border-color: #4299e1;
+            background-color: #f8f9fa;
+        }
+        .file-upload.dragover {
+            border-color: #4299e1;
+            background-color: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-film"></i> CineCríticas
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="card-title mb-0">
+                            <i class="fas fa-edit"></i> Editar Reseña: <%= review.title %>
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Mensajes -->
+                        <% if (success) { %>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> <%= success %>
+                            </div>
+                        <% } %>
+                        
+                        <% if (error) { %>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i> <%= error %>
+                            </div>
+                        <% } %>
+
+                        <!-- CAMBIO IMPORTANTE: añadir enctype="multipart/form-data" -->
+                        <form action="/admin/reviews/<%= review.id %>/update" method="POST" enctype="multipart/form-data">
+                            <div class="row">
+                                <!-- Columna izquierda: Información básica -->
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">
+                                            <i class="fas fa-heading"></i> Título de la Reseña:
+                                        </label>
+                                        <input type="text" class="form-control" id="title" name="title" 
+                                               value="<%= review.title %>" 
+                                               required 
+                                               placeholder="Ej: Increíble película de acción">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="movie_title" class="form-label">
+                                            <i class="fas fa-film"></i> Título de la Película:
+                                        </label>
+                                        <input type="text" class="form-control" id="movie_title" name="movie_title" 
+                                               value="<%= review.movie_title %>" 
+                                               required 
+                                               placeholder="Ej: Avengers: Endgame">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-star"></i> Calificación:
+                                        </label>
+                                        <div class="rating-stars mb-2" id="ratingStars">
+                                            <% for (let i = 1; i <= 5; i++) { %>
+                                                <span class="star <%= i <= review.rating ? 'active' : '' %>" 
+                                                      data-rating="<%= i %>">★</span>
+                                            <% } %>
+                                        </div>
+                                        <input type="hidden" id="rating" name="rating" value="<%= review.rating %>" required>
+                                        <div class="form-text">Haz clic en las estrellas para cambiar la calificación</div>
+                                    </div>
+                                    
+                                    <!-- CAMBIO: Reemplazar input URL por subida de archivo -->
+                                    <div class="mb-3">
+                                        <label for="poster_image" class="form-label">
+                                            <i class="fas fa-image"></i> Póster de la Película:
+                                        </label>
+                                        <div class="file-upload" id="fileUploadArea">
+                                            <div class="mb-2">
+                                                <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
+                                            </div>
+                                            <p class="mb-2">Haz clic para seleccionar o arrastra una imagen</p>
+                                            <small class="text-muted d-block">Formatos: JPG, PNG, GIF (Máx. 5MB)</small>
+                                            <input type="file" class="form-control d-none" id="poster_image" name="poster_image" 
+                                                   accept="image/*">
+                                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="document.getElementById('poster_image').click()">
+                                                <i class="fas fa-folder-open"></i> Seleccionar Archivo
+                                            </button>
+                                        </div>
+                                        <div id="fileName" class="mt-2 text-success"></div>
+                                        
+                                        <!-- Campo oculto para mantener la imagen actual -->
+                                        <input type="hidden" name="current_poster" value="<%= review.poster_url %>">
+                                        
+                                        <div class="form-text">
+                                            <% if (review.poster_url && !review.poster_url.includes('default-poster')) { %>
+                                                Imagen actual: <a href="<%= review.poster_url %>" target="_blank">Ver actual</a>
+                                            <% } else { %>
+                                                No hay imagen personalizada. Se usará el póster por defecto.
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Columna derecha: Vista previa -->
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <h5><i class="fas fa-eye"></i> Vista Previa</h5>
+                                        <img id="posterPreview" 
+                                             src="<%= review.poster_url || '/images/default-poster.jpg' %>" 
+                                             class="poster-preview img-fluid mb-3"
+                                             onerror="this.src='/images/default-poster.jpg'"
+                                             alt="Vista previa del póster">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 id="previewTitle" class="card-title"><%= review.title %></h6>
+                                                <p class="card-text">
+                                                    <small class="text-muted" id="previewMovie"><%= review.movie_title %></small>
+                                                </p>
+                                                <div id="previewRating" class="text-warning">
+                                                    <% for (let i = 0; i < 5; i++) { %>
+                                                        <% if (i < review.rating) { %>
+                                                            ★
+                                                        <% } else { %>
+                                                            ☆
+                                                        <% } %>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="content" class="form-label">
+                                    <i class="fas fa-comment"></i> Contenido de la Reseña:
+                                </label>
+                                <textarea class="form-control" id="content" name="content" 
+                                          rows="8" 
+                                          required 
+                                          placeholder="Escribe tu reseña aquí..."><%= review.content %></textarea>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="is_featured" name="is_featured" 
+                                       <%= review.is_featured ? 'checked' : '' %>>
+                                <label class="form-check-label" for="is_featured">
+                                    <i class="fas fa-star"></i> Marcar como reseña destacada
+                                </label>
+                                <div class="form-text">Las reseñas destacadas aparecen en la página principal</div>
+                            </div>
+                            
+                            <!-- Información de la reseña -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-info-circle"></i> Información de la Reseña</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <small><strong>Autor:</strong> <%= review.username %></small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small><strong>Creada:</strong> <%= new Date(review.created_at).toLocaleDateString('es-ES') %></small>
+                                        </div>
+                                        <% if (review.updated_at && review.updated_at !== review.created_at) { %>
+                                        <div class="col-md-6 mt-2">
+                                            <small><strong>Última modificación:</strong> <%= new Date(review.updated_at).toLocaleDateString('es-ES') %></small>
+                                        </div>
+                                        <% } %>
+                                        <div class="col-md-6 mt-2">
+                                            <small><strong>ID:</strong> #<%= review.id %></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary me-md-2">
+                                    <i class="fas fa-save"></i> Actualizar Reseña
+                                </button>
+                                <a href="/admin" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                                <a href="/review/<%= review.id %>" class="btn btn-info ms-2" target="_blank">
+                                    <i class="fas fa-eye"></i> Ver Reseña
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">CineCríticas &copy; 2024 - Panel de Administración</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sistema de rating con estrellas
+            const stars = document.querySelectorAll('.star');
+            const ratingInput = document.getElementById('rating');
+            const previewRating = document.getElementById('previewRating');
+            
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = this.getAttribute('data-rating');
+                    ratingInput.value = rating;
+                    
+                    // Actualizar estrellas visualmente
+                    stars.forEach(s => {
+                        if (s.getAttribute('data-rating') <= rating) {
+                            s.classList.add('active');
+                        } else {
+                            s.classList.remove('active');
+                        }
+                    });
+                    
+                    // Actualizar vista previa
+                    updateRatingPreview(rating);
+                });
+            });
+            
+            function updateRatingPreview(rating) {
+                let starsHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    starsHtml += i <= rating ? '★' : '☆';
+                }
+                previewRating.innerHTML = starsHtml;
+            }
+            
+            // Manejo de subida de archivos
+            const fileInput = document.getElementById('poster_image');
+            const fileUploadArea = document.getElementById('fileUploadArea');
+            const fileName = document.getElementById('fileName');
+            const posterPreview = document.getElementById('posterPreview');
+            
+            // Click en el área de subida
+            fileUploadArea.addEventListener('click', function(e) {
+                if (e.target !== fileInput) {
+                    fileInput.click();
+                }
+            });
+            
+            // Drag and drop
+            fileUploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            fileUploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('dragover');
+            });
+            
+            fileUploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelection(e.dataTransfer.files[0]);
+                }
+            });
+            
+            // Cambio de archivo
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    handleFileSelection(this.files[0]);
+                }
+            });
+            
+            function handleFileSelection(file) {
+                // Validar tipo de archivo
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor, selecciona un archivo de imagen válido.');
+                    return;
+                }
+                
+                // Validar tamaño (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. Máximo 5MB.');
+                    return;
+                }
+                
+                // Mostrar nombre del archivo
+                fileName.innerHTML = `<i class="fas fa-check"></i> Archivo seleccionado: ${file.name}`;
+                
+                // Mostrar vista previa
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    posterPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Vista previa en tiempo real del título y película
+            const titleInput = document.getElementById('title');
+            const movieInput = document.getElementById('movie_title');
+            const previewTitle = document.getElementById('previewTitle');
+            const previewMovie = document.getElementById('previewMovie');
+            
+            titleInput.addEventListener('input', function() {
+                previewTitle.textContent = this.value;
+            });
+            
+            movieInput.addEventListener('input', function() {
+                previewMovie.textContent = this.value;
+            });
+            
+            // Manejo de errores de imagen
+            posterPreview.addEventListener('error', function() {
+                this.src = '/images/default-poster.jpg';
+            });
+        });
+    </script>
+</body>
+</html>
