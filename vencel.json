@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "app.js",
+      "src": "app-vercel.js",
       "use": "@vercel/node"
     },
     {
@@ -12,14 +12,11 @@
   ],
   "routes": [
     {
-      "src": "/public/(.*)",
-      "dest": "/public/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/app.js"
+      "dest": "/app-vercel.js"
     }
-  ],
+  ]
+  ,
   "env": {
     "NODE_ENV": "production"
   }

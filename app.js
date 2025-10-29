@@ -1,6 +1,14 @@
 // app.js - VERSIÓN CORREGIDA PARA VERCEL
 console.log('🚀 Iniciando CineCríticas con SQLite...');
-
+// Añade esto al principio de app.js
+console.log('=== CINECRITICAS DEPLOY DEBUG ===');
+console.log('Node version:', process.version);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('VERCEL:', process.env.VERCEL);
+console.log('PORT:', process.env.PORT);
+console.log('Current directory:', process.cwd());
+console.log('Directory contents:', require('fs').readdirSync('.'));
+console.log('=== END DEBUG ===');
 // Configuración para Vercel
 const isVercel = process.env.VERCEL === '1';
 const isProduction = process.env.NODE_ENV === 'production';
