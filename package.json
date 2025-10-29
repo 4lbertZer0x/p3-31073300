@@ -1,18 +1,24 @@
 {
   "name": "cinecriticas",
   "version": "1.0.0",
-  "main": "app-vercel.js",
+  "description": "Sistema de reseñas de cine",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "vercel": "node app-vercel.js",
-    "build": "echo 'No build needed'"
+    "build": "echo 'No build step required for Node.js'",
+    "render-build": "echo 'Building for Render...'"
   },
+  "keywords": ["cine", "reseñas", "críticas"],
+  "author": "Tu Nombre",
+  "license": "MIT",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "express-session": "^1.17.3"
+    "ejs": "^3.1.9",
+    "express-session": "^1.17.3",
+    "bcryptjs": "^2.4.3",
+    "multer": "^1.4.5-lts.1",
+    "sqlite3": "^5.1.6"
   },
   "engines": {
     "node": ">=18.0.0"

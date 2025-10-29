@@ -1,19 +1,19 @@
-// app.js - VERSIÓN CORREGIDA PARA VERCEL
-console.log('🚀 Iniciando CineCríticas con SQLite...');
-// Añade esto al principio de app.js
-console.log('=== CINECRITICAS DEPLOY DEBUG ===');
-console.log('Node version:', process.version);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('VERCEL:', process.env.VERCEL);
-console.log('PORT:', process.env.PORT);
-console.log('Current directory:', process.cwd());
-console.log('Directory contents:', require('fs').readdirSync('.'));
-console.log('=== END DEBUG ===');
-// Configuración para Vercel
-const isVercel = process.env.VERCEL === '1';
+// app.js - VERSIÓN CONFIGURADA PARA RENDER
+console.log('🚀 Iniciando CineCríticas para Render...');
+
+// Configuración para Render
+const isRender = process.env.RENDER === 'true';
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Verificar dotenv solo en desarrollo
+console.log('=== CINECRITICAS RENDER DEBUG ===');
+console.log('Node version:', process.version);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('RENDER:', process.env.RENDER);
+console.log('PORT:', process.env.PORT);
+console.log('Current directory:', process.cwd());
+console.log('=== END DEBUG ===');
+
+// Solo usar dotenv en desarrollo local
 if (!isProduction) {
   try {
     require('dotenv').config();
@@ -36,27 +36,12 @@ const DatabaseService = require('./services/DatabaseServiceSQLite');
 
 const app = express();
 
-// USAR PUERTO DE VERCEL O 3000
+// PUERTO PARA RENDER
 const PORT = process.env.PORT || 3000;
 
-// ================= CONFIGURACIÓN MULTER (SUBIDA DE ARCHIVOS) =================
-
-// En Vercel, no podemos escribir archivos permanentemente, usar memoria
-const storage = isProduction 
-  ? multer.memoryStorage() // En producción, usar memoria
-  : multer.diskStorage({
-      destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, 'public/uploads');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-      },
-      filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'poster-' + uniqueSuffix + path.extname(file.originalname));
-      }
-    });
+// ================= CONFIGURACIÓN MULTER (MEMORY STORAGE) =================
+// En Render usar memoryStorage ya que no tenemos escritura persistente
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
@@ -70,7 +55,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize: 5 * 1024 * 1024 // 5MB
   }
 });
 
@@ -84,28 +69,29 @@ app.use(express.json());
 
 // Configuración de sesión para producción
 const sessionConfig = {
-  secret: process.env.SESSION_SECRET || 'cinecriticas-production-secret-key-2024',
+  secret: process.env.SESSION_SECRET || 'cinecriticas-render-secret-key-2024',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: isProduction,
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
   }
 };
 
-// En Vercel, necesitamos confiar en el proxy
+// En Render, confiar en el proxy
 if (isProduction) {
   app.set('trust proxy', 1);
   sessionConfig.cookie.secure = true;
 }
 
 app.use(session(sessionConfig));
-console.log('🔐 Sesiones configuradas');
+console.log('🔐 Sesiones configuradas para Render');
 
 // Middleware para user global
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   res.locals.currentPath = req.path;
+  res.locals.isProduction = isProduction;
   next();
 });
 
@@ -147,7 +133,7 @@ const requireAdmin = (req, res, next) => {
 
 // ================= RUTAS PÚBLICAS =================
 
-// Ruta de salud
+// Ruta de salud para Render
 app.get('/health', async (req, res) => {
   try {
     const dbStatus = await DatabaseService.testConnection();
@@ -156,11 +142,15 @@ app.get('/health', async (req, res) => {
       status: 'OK', 
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      platform: isVercel ? 'Vercel' : 'Local',
+      platform: isRender ? 'Render' : 'Local',
       database: {
         type: 'SQLite',
         connected: dbStatus.success,
         path: dbStatus.path
+      },
+      render: {
+        instance: process.env.RENDER_INSTANCE_ID || 'N/A',
+        service: process.env.RENDER_SERVICE_ID || 'N/A'
       }
     });
   } catch (error) {
@@ -181,8 +171,7 @@ app.get('/', async (req, res) => {
       title: 'Inicio - CineCríticas',
       featuredReviews: featuredReviews || [],
       allReviews: allReviews || [],
-      user: req.session.user,
-      isProduction: isProduction
+      user: req.session.user
     });
   } catch (error) {
     console.error('Error en página principal:', error);
@@ -190,8 +179,7 @@ app.get('/', async (req, res) => {
       title: 'Inicio - CineCríticas',
       featuredReviews: [],
       allReviews: [],
-      user: req.session.user,
-      isProduction: isProduction
+      user: req.session.user
     });
   }
 });
@@ -223,8 +211,7 @@ app.get('/review/:id', async (req, res) => {
       totalReviews: totalReviews,
       avgRating: avgRating.toFixed(1),
       featuredCount: featuredCount,
-      user: req.session.user,
-      isProduction: isProduction
+      user: req.session.user
     });
   } catch (error) {
     console.error('Error cargando reseña:', error);
@@ -260,8 +247,7 @@ app.get('/movie/:movieTitle', async (req, res) => {
       totalReviews: totalReviews,
       avgRating: avgRating.toFixed(1),
       featuredCount: featuredCount,
-      user: req.session.user,
-      isProduction: isProduction
+      user: req.session.user
     });
   } catch (error) {
     console.error('Error cargando reseñas de película:', error);
@@ -284,8 +270,7 @@ app.get('/login', (req, res) => {
   res.render('login', {
     title: 'Iniciar Sesión - CineCríticas',
     error: null,
-    user: null,
-    isProduction: isProduction
+    user: null
   });
 });
 
@@ -298,8 +283,7 @@ app.post('/login', async (req, res) => {
       return res.render('login', {
         title: 'Iniciar Sesión - CineCríticas',
         error: 'Usuario y contraseña son requeridos',
-        user: null,
-        isProduction: isProduction
+        user: null
       });
     }
     
@@ -339,8 +323,7 @@ app.post('/login', async (req, res) => {
     res.render('login', {
       title: 'Iniciar Sesión - CineCríticas',
       error: 'Usuario o contraseña incorrectos',
-      user: null,
-      isProduction: isProduction
+      user: null
     });
     
   } catch (error) {
@@ -348,8 +331,7 @@ app.post('/login', async (req, res) => {
     res.render('login', {
       title: 'Iniciar Sesión - CineCríticas',
       error: 'Error del servidor. Intenta nuevamente.',
-      user: null,
-      isProduction: isProduction
+      user: null
     });
   }
 });
@@ -363,8 +345,7 @@ app.get('/register', (req, res) => {
   res.render('register', {
     title: 'Registrarse - CineCríticas',
     error: null,
-    user: null,
-    isProduction: isProduction
+    user: null
   });
 });
 
@@ -376,8 +357,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'Todos los campos son requeridos',
-        user: null,
-        isProduction: isProduction
+        user: null
       });
     }
     
@@ -385,8 +365,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'Las contraseñas no coinciden',
-        user: null,
-        isProduction: isProduction
+        user: null
       });
     }
     
@@ -410,8 +389,7 @@ app.post('/register', async (req, res) => {
       return res.render('register', {
         title: 'Registrarse - CineCríticas',
         error: 'Error al crear el usuario',
-        user: null,
-        isProduction: isProduction
+        user: null
       });
     }
     
@@ -433,8 +411,7 @@ app.post('/register', async (req, res) => {
     res.render('register', {
       title: 'Registrarse - CineCríticas',
       error: 'Error al registrar usuario. El usuario ya existe.',
-      user: null,
-      isProduction: isProduction
+      user: null
     });
   }
 });
@@ -453,8 +430,7 @@ app.post('/logout', (req, res) => {
 app.get('/profile', requireAuth, (req, res) => {
   res.render('profile', {
     title: 'Mi Perfil - CineCríticas',
-    user: req.session.user,
-    isProduction: isProduction
+    user: req.session.user
   });
 });
 
@@ -466,12 +442,11 @@ app.get('/reviews/new', requireAuth, (req, res) => {
     title: 'Nueva Reseña - CineCríticas',
     user: req.session.user,
     success: null,
-    error: null,
-    isProduction: isProduction
+    error: null
   });
 });
 
-// Ruta para crear reseñas (POST) - MODIFICADA PARA PRODUCCIÓN
+// Ruta para crear reseñas (POST) - CON IMAGEN POR DEFECTO EN RENDER
 app.post('/reviews/new', requireAuth, upload.single('poster_image'), async (req, res) => {
   try {
     const { title, content, rating, movie_title } = req.body;
@@ -482,7 +457,7 @@ app.post('/reviews/new', requireAuth, upload.single('poster_image'), async (req,
         content: content ? `${content.substring(0, 50)}...` : 'empty',
         rating,
         movie_title,
-        file: req.file ? req.file.filename : 'no file'
+        file: req.file ? 'file received' : 'no file'
       });
     }
     
@@ -491,8 +466,7 @@ app.post('/reviews/new', requireAuth, upload.single('poster_image'), async (req,
         title: 'Nueva Reseña - CineCríticas',
         user: req.session.user,
         error: 'Todos los campos son requeridos',
-        success: null,
-        isProduction: isProduction
+        success: null
       });
     }
 
@@ -502,13 +476,12 @@ app.post('/reviews/new', requireAuth, upload.single('poster_image'), async (req,
         title: 'Nueva Reseña - CineCríticas',
         user: req.session.user,
         error: 'La calificación debe ser un número entre 1 y 5',
-        success: null,
-        isProduction: isProduction
+        success: null
       });
     }
 
-    // En producción, siempre usar imagen por defecto
-    let poster_url = '/images/default-poster.jpg';
+    // En Render, siempre usar imagen por defecto
+    const poster_url = '/images/default-poster.jpg';
     
     await DatabaseService.createReview({
       title: title.trim(),
@@ -530,8 +503,7 @@ app.post('/reviews/new', requireAuth, upload.single('poster_image'), async (req,
       title: 'Nueva Reseña - CineCríticas',
       user: req.session.user,
       error: 'Error creando la reseña: ' + error.message,
-      success: null,
-      isProduction: isProduction
+      success: null
     });
   }
 });
@@ -550,8 +522,7 @@ app.get('/admin', requireAdmin, async (req, res) => {
       reviews: allReviews || [],
       users: allUsers || [],
       success: req.query.success,
-      error: req.query.error,
-      isProduction: isProduction
+      error: req.query.error
     });
   } catch (error) {
     console.error('Error en admin:', error);
@@ -578,8 +549,7 @@ app.get('/admin/users/:id/edit', requireAdmin, async (req, res) => {
       user: req.session.user,
       userToEdit: userToEdit,
       success: null,
-      error: null,
-      isProduction: isProduction
+      error: null
     });
     
   } catch (error) {
@@ -634,8 +604,7 @@ app.get('/admin/users/new', requireAdmin, (req, res) => {
     title: 'Nuevo Usuario - CineCríticas',
     user: req.session.user,
     success: null,
-    error: null,
-    isProduction: isProduction
+    error: null
   });
 });
 
@@ -653,8 +622,7 @@ app.post('/admin/users/new', requireAdmin, async (req, res) => {
         title: 'Nuevo Usuario - CineCríticas',
         user: req.session.user,
         error: 'Todos los campos son requeridos',
-        success: null,
-        isProduction: isProduction
+        success: null
       });
     }
     
@@ -663,8 +631,7 @@ app.post('/admin/users/new', requireAdmin, async (req, res) => {
         title: 'Nuevo Usuario - CineCríticas',
         user: req.session.user,
         error: 'Las contraseñas no coinciden',
-        success: null,
-        isProduction: isProduction
+        success: null
       });
     }
     
@@ -673,8 +640,7 @@ app.post('/admin/users/new', requireAdmin, async (req, res) => {
         title: 'Nuevo Usuario - CineCríticas',
         user: req.session.user,
         error: 'La contraseña debe tener al menos 6 caracteres',
-        success: null,
-        isProduction: isProduction
+        success: null
       });
     }
     
@@ -684,15 +650,16 @@ app.post('/admin/users/new', requireAdmin, async (req, res) => {
         title: 'Nuevo Usuario - CineCríticas',
         user: req.session.user,
         error: 'El nombre de usuario ya existe',
-        success: null,
-        isProduction: isProduction
+        success: null
       });
     }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
     
     const newUser = await DatabaseService.createUser({
       username,
       email,
-      password_hash: password,
+      password_hash: hashedPassword,
       role: role || 'user'
     });
     
@@ -708,8 +675,7 @@ app.post('/admin/users/new', requireAdmin, async (req, res) => {
       title: 'Nuevo Usuario - CineCríticas',
       user: req.session.user,
       error: 'Error al crear el usuario: ' + error.message,
-      success: null,
-      isProduction: isProduction
+      success: null
     });
   }
 });
@@ -732,8 +698,7 @@ app.get('/admin/reviews/:id/edit', requireAdmin, async (req, res) => {
       review: review,
       user: req.session.user,
       success: null,
-      error: null,
-      isProduction: isProduction
+      error: null
     });
   } catch (error) {
     console.error('Error cargando reseña:', error);
@@ -741,7 +706,7 @@ app.get('/admin/reviews/:id/edit', requireAdmin, async (req, res) => {
   }
 });
 
-// Procesar edición de reseña - MODIFICADA PARA PRODUCCIÓN
+// Procesar edición de reseña - CON IMAGEN POR DEFECTO EN RENDER
 app.post('/admin/reviews/:id/update', requireAdmin, upload.single('poster_image'), async (req, res) => {
   try {
     const { title, content, rating, movie_title, is_featured } = req.body;
@@ -753,7 +718,7 @@ app.post('/admin/reviews/:id/update', requireAdmin, upload.single('poster_image'
         rating,
         movie_title,
         is_featured,
-        file: req.file ? req.file.filename : 'no file'
+        file: req.file ? 'file received' : 'no file'
       });
     }
     
@@ -763,8 +728,8 @@ app.post('/admin/reviews/:id/update', requireAdmin, upload.single('poster_image'
     
     const currentReview = await DatabaseService.getReviewById(req.params.id);
     
-    // En producción, mantener la imagen actual o usar por defecto
-    let poster_url = currentReview.poster_url;
+    // En Render, mantener la imagen actual (siempre será la por defecto)
+    const poster_url = currentReview.poster_url;
     
     const numericRating = parseInt(rating);
     if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
@@ -801,26 +766,28 @@ app.post('/admin/reviews/:id/delete', requireAdmin, async (req, res) => {
 // ================= RUTAS ESPECIALES PARA DEBUG =================
 
 // Ruta para hacer admin (SOLO PARA DESARROLLO)
-app.get('/make-admin', async (req, res) => {
-  try {
-    const users = await DatabaseService.getAllUsers();
-    if (users.length > 0) {
-      const firstUser = users[0];
-      await DatabaseService.updateUser(firstUser.id, { role: 'admin' });
-      
-      res.send(`
-        <h1>✅ ¡Usuario convertido a Admin!</h1>
-        <p>El usuario <strong>${firstUser.username}</strong> ahora tiene rol de administrador.</p>
-        <p><a href="/login">Iniciar sesión nuevamente</a> para aplicar los cambios.</p>
-      `);
-    } else {
-      res.send('<h1>❌ No hay usuarios en la base de datos</h1>');
+if (!isProduction) {
+  app.get('/make-admin', async (req, res) => {
+    try {
+      const users = await DatabaseService.getAllUsers();
+      if (users.length > 0) {
+        const firstUser = users[0];
+        await DatabaseService.updateUser(firstUser.id, { role: 'admin' });
+        
+        res.send(`
+          <h1>✅ ¡Usuario convertido a Admin!</h1>
+          <p>El usuario <strong>${firstUser.username}</strong> ahora tiene rol de administrador.</p>
+          <p><a href="/login">Iniciar sesión nuevamente</a> para aplicar los cambios.</p>
+        `);
+      } else {
+        res.send('<h1>❌ No hay usuarios en la base de datos</h1>');
+      }
+    } catch (error) {
+      console.error('Error haciendo admin:', error);
+      res.send(`<h1>❌ Error: ${error.message}</h1>`);
     }
-  } catch (error) {
-    console.error('Error haciendo admin:', error);
-    res.send(`<h1>❌ Error: ${error.message}</h1>`);
-  }
-});
+  });
+}
 
 // Ruta para ver información de sesión
 app.get('/debug-session', (req, res) => {
@@ -829,7 +796,7 @@ app.get('/debug-session', (req, res) => {
     user: req.session.user,
     environment: process.env.NODE_ENV,
     isProduction: isProduction,
-    isVercel: isVercel
+    isRender: isRender
   });
 });
 
@@ -878,11 +845,11 @@ app.use((error, req, res, next) => {
 
 const startServer = async () => {
   try {
-    console.log('🚀 Iniciando CineCríticas...');
+    console.log('🚀 Iniciando CineCríticas para Render...');
     console.log('📍 Entorno:', process.env.NODE_ENV || 'development');
     console.log('🔑 Puerto:', PORT);
     console.log('🗄️  Base de datos: SQLite');
-    console.log('🌍 Plataforma:', isVercel ? 'Vercel' : 'Local');
+    console.log('🌍 Plataforma:', isRender ? 'Render' : 'Local');
     
     const dbSuccess = await initializeDatabase();
     
@@ -891,31 +858,29 @@ const startServer = async () => {
       
       const users = await DatabaseService.getAllUsers();
       console.log(`👥 Usuarios en base de datos: ${users.length}`);
+      
+      // Crear usuario admin por defecto si no hay usuarios
+      if (users.length === 0) {
+        console.log('👤 Creando usuario administrador por defecto...');
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await DatabaseService.createUser({
+          username: 'admin',
+          email: 'admin@cinecriticas.com',
+          password_hash: hashedPassword,
+          role: 'admin'
+        });
+        console.log('✅ Usuario administrador creado: admin / admin123');
+      }
     } else {
       console.log('⚠️  Problemas con SQLite, pero continuando...');
     }
     
-    // En producción, no crear directorios
-    if (!isProduction) {
-      const uploadDir = path.join(__dirname, 'public/uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-        console.log('📁 Directorio de uploads creado:', uploadDir);
-      }
-      
-      const imagesDir = path.join(__dirname, 'public/images');
-      if (!fs.existsSync(imagesDir)) {
-        fs.mkdirSync(imagesDir, { recursive: true });
-        console.log('📁 Directorio de imágenes creado:', imagesDir);
-      }
-    }
-    
-    app.listen(PORT, () => {
-      console.log(`🎬 Servidor corriendo en: http://localhost:${PORT}`);
-      console.log('✅ ¡CineCríticas está listo!');
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🎬 Servidor corriendo en: http://0.0.0.0:${PORT}`);
+      console.log('✅ ¡CineCríticas está listo para Render!');
       
       if (isProduction) {
-        console.log('💡 MODO PRODUCCIÓN: Subida de archivos deshabilitada');
+        console.log('💡 MODO RENDER: Usando imágenes por defecto');
       }
     });
   } catch (error) {
