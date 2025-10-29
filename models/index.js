@@ -1,28 +1,16 @@
-// models/index.js
 const DatabaseService = require('../services/DatabaseServiceSQLite');
 
-async function initializeDatabase() {
+const initializeDatabase = async () => {
   try {
-    console.log('🔄 Inicializando SQLite...');
-    const success = await DatabaseService.connect();
-    
-    if (success) {
-      console.log('✅ SQLite inicializado correctamente');
-      return true;
-    } else {
-      throw new Error('No se pudo conectar a SQLite');
-    }
+    await DatabaseService.initializeDB();
+    console.log('✅ Base de datos SQLite inicializada correctamente');
+    return true;
   } catch (error) {
-    console.error('❌ Error inicializando base de datos:', error.message);
-    
-    if (process.env.NODE_ENV === 'production') {
-      console.error('💥 No se puede continuar sin base de datos');
-      return false;
-    }
-    
-    console.log('⚠️  Continuando en modo desarrollo...');
+    console.error('❌ Error inicializando base de datos:', error);
     return false;
   }
-}
+};
 
-module.exports = { initializeDatabase };
+module.exports = {
+  initializeDatabase
+};

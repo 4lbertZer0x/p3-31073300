@@ -6,8 +6,9 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "echo 'No build step required for Node.js'",
-    "render-build": "echo 'Building for Render...'"
+    "build": "npm rebuild && npm run setup-db",
+    "setup-db": "node scripts/init-db.js",
+    "render-build": "npm rebuild --build-from-source"
   },
   "keywords": ["cine", "reseñas", "críticas"],
   "author": "Tu Nombre",

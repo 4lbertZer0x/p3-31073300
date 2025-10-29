@@ -1,10 +1,89 @@
 // services/DatabaseServiceSQLite.js - VERSIÓN COMPLETA CON MIGRACIÓN ROBUSTA
-const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const bcrypt = require('bcryptjs');
+
+// Configurar ruta de la base de datos para Render
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? path.join(require('os').tmpdir(), 'cinecriticas.db')
+  : path.join(__dirname, '..', 'cinecriticas.db');
+
+console.log('📁 Ruta de base de datos:', dbPath);
+
+let db = null;
+
+const initializeDB = () => {
+  return new Promise((resolve, reject) => {
+    try {
+      db = new sqlite3.Database(dbPath, (err) => {
+        if (err) {
+          console.error('❌ Error conectando a SQLite:', err.message);
+          reject(err);
+        } else {
+          console.log('✅ Conectado a la base de datos SQLite');
+          createTables().then(resolve).catch(reject);
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+const createTables = () => {
+  return new Promise((resolve, reject) => {
+    const usersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'user',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    const reviewsTable = `
+      CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        movie_title TEXT NOT NULL,
+        poster_url TEXT DEFAULT '/images/default-poster.jpg',
+        is_featured BOOLEAN DEFAULT 0,
+        user_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    `;
+
+    db.run(usersTable, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      db.run(reviewsTable, (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        console.log('✅ Tablas creadas/verificadas correctamente');
+        resolve();
+      });
+    });
+  });
+};
+
+// ... (el resto del código del DatabaseService se mantiene igual)
+// Solo asegúrate de que todas las funciones usen la misma conexión db
 class DatabaseServiceSQLite {
   constructor() {
     this.db = null;
