@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= movie ? 'Editar' : 'Nueva' %> Película/Serie - CineCríticas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .admin-badge {
+            background: #e53e3e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: #4299e1; color: white; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-danger { background: #e53e3e; color: white; }
+        .btn-secondary { background: #718096; color: white; }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            margin: 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #276749;
+            border-color: #48bb78;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border-color: #e53e3e;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            border: 2px solid #e2e8f0;
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        .current-image {
+            max-width: 200px;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #4299e1;
+        }
+
+        .image-section {
+            border: 2px dashed #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f7fafc;
+        }
+
+        .image-section-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-text {
+            color: #718096;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .image-preview, .current-image {
+                max-width: 150px;
+                max-height: 225px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <span>CineCríticas</span>
+                <span class="admin-badge">ADMIN PANEL</span>
+            </div>
+            <div>
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Ir al Sitio
+                </a>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <% if (success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= success %>
+            </div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= error %>
+            </div>
+        <% } %>
+
+        <!-- Form -->
+        <div class="form-container">
+            <h2 class="form-title">
+                <i class="fas fa-video"></i>
+                <%= movie ? 'Editar Película/Serie' : 'Nueva Película/Serie' %>
+            </h2>
+
+            <form action="<%= movie ? '/admin/movies/' + movie.id + '/edit' : '/admin/movies/new' %>" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Título *</label>
+                    <input type="text" 
+                           id="title" 
+                           name="title" 
+                           class="form-control" 
+                           value="<%= movie ? movie.title : '' %>" 
+                           required 
+                           placeholder="Ej: Avengers: Endgame">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">Año *</label>
+                        <input type="text" 
+                               id="year" 
+                               name="year" 
+                               class="form-control" 
+                               value="<%= movie ? movie.year : '' %>" 
+                               required 
+                               placeholder="Ej: 2019 o 2019-2023">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="genre">Género *</label>
+                        <input type="text" 
+                               id="genre" 
+                               name="genre" 
+                               class="form-control" 
+                               value="<%= movie ? movie.genre : '' %>" 
+                               required 
+                               placeholder="Ej: Acción, Aventura, Ciencia Ficción">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="type">Tipo *</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" 
+                                   name="type" 
+                                   value="movie" 
+                                   <%= (!movie || movie.type === 'movie') ? 'checked' : '' %>>
+                            🎬 Película
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" 
+                                   name="type" 
+                                   value="series" 
+                                   <%= (movie && movie.type === 'series') ? 'checked' : '' %>>
+                            📺 Serie
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Descripción</label>
+                    <textarea id="description" 
+                              name="description" 
+                              class="form-control" 
+                              placeholder="Sinopsis o descripción de la película/serie..."><%= movie ? movie.description : '' %></textarea>
+                </div>
+
+                <!-- Sección de Imagen -->
+                <div class="image-section">
+                    <div class="image-section-title">
+                        <i class="fas fa-image"></i>
+                        Imagen de la Película/Serie
+                    </div>
+
+                    <!-- Opción 1: Subir archivo -->
+                    <div class="form-group">
+                        <label for="poster_image">Subir Imagen:</label>
+                        <input type="file" 
+                               id="poster_image" 
+                               name="poster_image" 
+                               class="form-control" 
+                               accept="image/*"
+                               onchange="previewImage(this)">
+                        <div class="form-text">
+                            Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB
+                        </div>
+                        <!-- Vista previa de nueva imagen -->
+                        <img id="imagePreview" src="" class="image-preview">
+                    </div>
+
+                    <!-- Opción 2: URL externa -->
+                    <div class="form-group">
+                        <label for="poster_url">O usar URL Externa:</label>
+                        <input type="url" 
+                               id="poster_url" 
+                               name="poster_url" 
+                               class="form-control" 
+                               value="<%= movie ? movie.poster_url : '' %>" 
+                               placeholder="https://ejemplo.com/poster.jpg">
+                        <div class="form-text">
+                            Dejar vacío para usar imagen por defecto
+                        </div>
+                    </div>
+
+                    <!-- Imagen actual (solo en edición) -->
+                    <% if (movie && movie.poster_url && movie.poster_url !== '/images/default-poster.jpg') { %>
+                        <div class="form-group">
+                            <label>Imagen Actual:</label>
+                            <img src="<%= movie.poster_url %>" 
+                                 alt="<%= movie.title %>" 
+                                 class="current-image"
+                                 onerror="this.style.display='none'">
+                            <div class="form-text">
+                                Imagen actual de la película/serie
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <% if (movie) { %>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" 
+                                   id="is_active" 
+                                   name="is_active" 
+                                   value="true" 
+                                   <%= (movie.is_active) ? 'checked' : '' %>>
+                            <label for="is_active">Activa (visible en el sitio)</label>
+                        </div>
+                    </div>
+                <% } %>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i>
+                        <%= movie ? 'Actualizar' : 'Crear' %> Película/Serie
+                    </button>
+                    <a href="/admin" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                    <% if (movie) { %>
+                        <a href="/admin/movies/<%= movie.id %>/delete" 
+                           class="btn btn-danger"
+                           onclick="return confirm('¿Estás seguro de desactivar esta película/serie?')">
+                            <i class="fas fa-eye-slash"></i> Desactivar
+                        </a>
+                    <% } %>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Vista previa de imagen
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const file = input.files[0];
+            
+            if (file) {
+                // Validar tamaño
+                const fileSize = file.size / 1024 / 1024; // MB
+                if (fileSize > 5) {
+                    alert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
+                    input.value = '';
+                    preview.classList.remove('show');
+                    return;
+                }
+                
+                // Validar tipo
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Solo se permiten imágenes (JPEG, JPG, PNG, GIF).');
+                    input.value = '';
+                    preview.classList.remove('show');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.add('show');
+                }
+                
+                reader.readAsDataURL(file);
+            } else {
+                preview.classList.remove('show');
+            }
+        }
+
+        // Validación del formulario
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            
+            form.addEventListener('submit', function(e) {
+                const title = document.getElementById('title').value.trim();
+                const year = document.getElementById('year').value.trim();
+                const genre = document.getElementById('genre').value.trim();
+                
+                if (!title || !year || !genre) {
+                    e.preventDefault();
+                    alert('Por favor, completa todos los campos obligatorios (*)');
+                    return false;
+                }
+                
+                // Validar archivo de imagen si se seleccionó
+                const fileInput = document.getElementById('poster_image');
+                if (fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    const fileSize = file.size / 1024 / 1024; // MB
+                    
+                    if (fileSize > 5) {
+                        e.preventDefault();
+                        alert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
+                        return false;
+                    }
+                    
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    if (!allowedTypes.includes(file.type)) {
+                        e.preventDefault();
+                        alert('Solo se permiten imágenes (JPEG, JPG, PNG, GIF).');
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+
+            // Si hay imagen actual, mostrar preview
+            <% if (movie && movie.poster_url && movie.poster_url !== '/images/default-poster.jpg') { %>
+                const currentImage = document.querySelector('.current-image');
+                if (currentImage) {
+                    currentImage.onerror = function() {
+                        this.style.display = 'none';
+                    };
+                }
+            <% } %>
+        });
+    </script>
+</body>
+</html>

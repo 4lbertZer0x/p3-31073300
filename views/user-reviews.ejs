@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: #4299e1; color: white; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-danger { background: #e53e3e; color: white; }
+        .btn-secondary { background: #718096; color: white; }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .review-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .review-movie {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .review-title {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .review-rating {
+            color: #ffc107;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .review-content {
+            color: #718096;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .review-date {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #cbd5e0;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #276749;
+            border-color: #48bb78;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border-color: #e53e3e;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <span>CineCríticas</span>
+            </div>
+            <div>
+                <a href="/" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Volver al Inicio
+                </a>
+                <a href="/reviews/new" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Nueva Reseña
+                </a>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <% if (success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= success %>
+            </div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= error %>
+            </div>
+        <% } %>
+
+        <!-- User Reviews Section -->
+        <div class="section">
+            <h2 style="margin-bottom: 20px; color: #2d3748;">
+                <i class="fas fa-user"></i> Mis Reseñas
+            </h2>
+
+            <% if (reviews && reviews.length > 0) { %>
+                <p style="color: #718096; margin-bottom: 20px;">
+                    Tienes <%= reviews.length %> reseña(s) publicada(s)
+                </p>
+                
+                <div class="reviews-grid">
+                    <% reviews.forEach(function(review) { %>
+                        <div class="review-card">
+                            <div class="review-movie"><%= review.movie_title %></div>
+                            <div class="review-title"><%= review.title %></div>
+                            <div class="review-rating">
+                                <% for (var i = 0; i < 5; i++) { %>
+                                    <% if (i < review.rating) { %>
+                                        ★
+                                    <% } else { %>
+                                        ☆
+                                    <% } %>
+                                <% } %>
+                                (<%= review.rating %>/5)
+                            </div>
+                            <div class="review-content">
+                                <%= review.content.length > 120 ? review.content.substring(0, 120) + '...' : review.content %>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                                <span class="review-date">
+                                    <%= new Date(review.created_at).toLocaleDateString('es-ES') %>
+                                </span>
+                                <a href="/review/<%= review.id %>" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <h3>No tienes reseñas todavía</h3>
+                    <p>Comienza compartiendo tu opinión sobre una película o serie.</p>
+                    <a href="/reviews/new" class="btn btn-success mt-3">
+                        <i class="fas fa-plus-circle"></i> Crear Mi Primera Reseña
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

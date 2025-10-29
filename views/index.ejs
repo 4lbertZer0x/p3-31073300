@@ -14,57 +14,44 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
             min-height: 100vh;
             color: #333;
+            padding: 20px;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
         }
 
-        /* Header Styles */
-        header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        /* Header */
+        .header {
+            background: white;
             border-radius: 15px;
             padding: 20px 30px;
             margin-bottom: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .logo {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
-            color: #4a5568;
-        }
-
-        .logo i {
-            color: #e53e3e;
+            color: #2d3748;
         }
 
         .user-info {
             display: flex;
             align-items: center;
             gap: 15px;
-        }
-
-        .user-welcome {
-            font-weight: 500;
-            color: #4a5568;
         }
 
         .btn {
@@ -78,61 +65,26 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
 
-        .btn-primary {
-            background: #4299e1;
-            color: white;
-        }
+        .btn-primary { background: #4299e1; color: white; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-danger { background: #e53e3e; color: white; }
+        .btn-secondary { background: #718096; color: white; }
 
-        .btn-primary:hover {
-            background: #3182ce;
+        .btn:hover {
             transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: #48bb78;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #38a169;
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: #e53e3e;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c53030;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #718096;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #4a5568;
-            transform: translateY(-2px);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         /* Hero Section */
         .hero {
-            background: rgba(255, 255, 255, 0.95);
+            background: white;
             border-radius: 15px;
             padding: 40px;
-            text-align: center;
             margin-bottom: 30px;
+            text-align: center;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
@@ -144,385 +96,343 @@
 
         .hero p {
             font-size: 1.2rem;
-            color: #4a5568;
+            color: #718096;
             margin-bottom: 25px;
         }
 
-        /* Sections */
-        .section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            color: #2d3748;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title i {
-            color: #e53e3e;
-        }
-
-        /* Review Cards */
+        /* Reviews Grid */
         .reviews-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
-            margin-top: 20px;
+            margin-bottom: 40px;
         }
 
         .review-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
 
         .review-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .review-card.featured::before {
-            content: '⭐ DESTACADA';
-            position: absolute;
-            top: 15px;
-            right: -30px;
-            background: #ffd700;
-            color: #000;
-            padding: 5px 35px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            transform: rotate(45deg);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
 
         .review-header {
             display: flex;
             justify-content: between;
-            align-items: flex-start;
+            align-items: start;
             margin-bottom: 15px;
         }
 
-        .review-title {
+        .review-movie {
             font-size: 1.3rem;
             font-weight: bold;
             color: #2d3748;
             margin-bottom: 5px;
-            flex: 1;
         }
 
-        .rating {
-            color: #ffc107;
+        .review-title {
             font-size: 1.1rem;
-            margin-left: 10px;
+            color: #4a5568;
+            margin-bottom: 10px;
         }
 
-        .movie-title {
-            color: #718096;
-            font-weight: 500;
+        .review-rating {
+            color: #ffc107;
+            font-size: 1.2rem;
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
 
         .review-content {
-            color: #4a5568;
+            color: #718096;
             line-height: 1.6;
             margin-bottom: 15px;
         }
 
-        .review-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 15px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.9rem;
-            color: #718096;
-        }
-
         .review-author {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
+            color: #4299e1;
+            font-weight: 600;
         }
 
         .review-date {
             color: #a0aec0;
+            font-size: 0.9rem;
         }
 
-        /* Empty State */
+        .featured-badge {
+            background: #fefcbf;
+            color: #744210;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
         .empty-state {
             text-align: center;
-            padding: 40px;
+            padding: 60px 20px;
             color: #718096;
         }
 
         .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
+            font-size: 4rem;
+            margin-bottom: 20px;
             color: #cbd5e0;
         }
 
-        /* Responsive */
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* User Actions */
+        .user-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #276749;
+            border-color: #48bb78;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border-color: #e53e3e;
+        }
+
         @media (max-width: 768px) {
-            .header-top {
+            .header {
                 flex-direction: column;
-                gap: 15px;
+                text-align: center;
             }
-
-            .nav-links {
-                justify-content: center;
-            }
-
-            .user-info {
+            
+            .user-actions {
                 flex-direction: column;
-                gap: 10px;
+                align-items: center;
             }
-
-            .reviews-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .hero p {
-                font-size: 1rem;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .review-card {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        /* Badges */
-        .admin-badge {
-            background: #e53e3e;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Header -->
-        <header>
-            <div class="header-top">
-                <div class="logo">
-                    <i class="fas fa-film"></i>
-                    <span>CineCríticas</span>
-                </div>
-                
-                <div class="user-info">
-                    <% if (user) { %>
-                        <span class="user-welcome">Hola, <strong><%= user.username %></strong>
-                            <% if (user.role === 'admin') { %>
-                                <span class="admin-badge">ADMIN</span>
-                            <% } %>
-                        </span>
-                        <form method="POST" action="/logout" style="display: inline;">
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-sign-out-alt"></i>Cerrar Sesión
-                            </button>
-                        </form>
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <span>CineCríticas</span>
+            </div>
+            
+            <div class="user-info">
+                <% if (user) { %>
+                    <span>Hola, <strong><%= user.username %></strong></span>
+                    <% if (user.role === 'admin') { %>
+                        <a href="/admin" class="btn btn-primary">
+                            <i class="fas fa-cog"></i> Panel Admin
+                        </a>
                     <% } else { %>
-                        <a href="/login" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt"></i>Iniciar Sesión
+                        <a href="/reviews/new" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Nueva Reseña
+                        </a>
+                    <% } %>
+                    <form method="POST" action="/logout" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </button>
+                    </form>
+                <% } else { %>
+                    <a href="/login" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </a>
+                    <a href="/register" class="btn btn-secondary">
+                        <i class="fas fa-user-plus"></i> Registrarse
+                    </a>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= success %>
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= error %>
+            </div>
+        <% } %>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Bienvenido a CineCríticas</h1>
+            <p>Comparte tu opinión sobre tus películas y series favoritas</p>
+            
+            <% if (user) { %>
+                <div class="user-actions">
+                    <% if (user.role === 'user') { %>
+                        <a href="/reviews/new" class="btn btn-success btn-lg">
+                            <i class="fas fa-plus-circle"></i> Crear Nueva Reseña
+                        </a>
+                        
+                    <% } else if (user.role === 'admin') { %>
+                        <a href="/admin" class="btn btn-success btn-lg">
+                            <i class="fas fa-cog"></i> Panel de Administración
+                        </a>
+                        <a href="/admin/reviews/new" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus-circle"></i> Crear Reseña
                         </a>
                     <% } %>
                 </div>
-            </div>
-
-            <% if (user) { %>
-            <div class="nav-links">
-                <% if (user.role === 'admin') { %>
-                    <a href="/admin" class="btn btn-secondary">
-                        <i class="fas fa-cog"></i>Panel Admin
-                    </a>
-                <% } %>
-                <a href="/reviews/new" class="btn btn-success">
-                    <i class="fas fa-plus"></i>Nueva Reseña
-                </a>
-                <a href="/profile" class="btn btn-secondary">
-                    <i class="fas fa-user"></i>Mi Perfil
-                </a>
-            </div>
-            <% } %>
-        </header>
-
-        <!-- Hero Section -->
-        <section class="hero">
-            <h1>🎬 Descubre y Comparte Críticas de Cine</h1>
-            <p>La comunidad donde los amantes del cine comparten sus opiniones y descubren nuevas películas</p>
-            <% if (!user) { %>
-                <a href="/login" class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 30px;">
-                    <i class="fas fa-rocket"></i>Únete a la Comunidad
-                </a>
             <% } else { %>
-                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                    <a href="/reviews/new" class="btn btn-success" style="font-size: 1.1rem; padding: 12px 30px;">
-                        <i class="fas fa-edit"></i>Escribir Reseña
+                <div class="user-actions">
+                    <a href="/register" class="btn btn-success btn-lg">
+                        <i class="fas fa-user-plus"></i> Únete a la Comunidad
                     </a>
-                    <a href="#all-reviews" class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 30px;">
-                        <i class="fas fa-star"></i>Ver Reseñas
+                    <a href="/login" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
                     </a>
                 </div>
             <% } %>
-        </section>
+        </div>
 
         <!-- Featured Reviews -->
-      
+        <% if (featuredReviews && featuredReviews.length > 0) { %>
+            <h2 style="color: white; margin-bottom: 20px; text-align: center;">
+                <i class="fas fa-fire"></i> Reseñas Destacadas
+            </h2>
+            <div class="reviews-grid">
+                <% featuredReviews.forEach(function(review) { %>
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div style="flex: 1;">
+                                <div class="review-movie">
+                                    <%= review.movie_title %>
+                                    <span class="featured-badge">⭐ Destacada</span>
+                                </div>
+                                <div class="review-title"><%= review.title %></div>
+                            </div>
+                        </div>
+                        <div class="review-rating">
+                            <% for (var i = 0; i < 5; i++) { %>
+                                <% if (i < review.rating) { %>
+                                    ★
+                                <% } else { %>
+                                    ☆
+                                <% } %>
+                            <% } %>
+                            (<%= review.rating %>/5)
+                        </div>
+                        <div class="review-content">
+                            <%= review.content.length > 150 ? review.content.substring(0, 150) + '...' : review.content %>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="review-author">Por: <%= review.username %></span>
+                            <span class="review-date">
+                                <%= new Date(review.created_at).toLocaleDateString('es-ES') %>
+                            </span>
+                        </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <a href="/review/<%= review.id %>" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Reseña Completa
+                            </a>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } %>
 
-        <!-- Footer -->
-        <footer style="text-align: center; padding: 20px; color: white; margin-top: 40px;">
-            <p>© 2024 CineCríticas - La comunidad de críticas de cine</p>
-            <p style="opacity: 0.8; font-size: 0.9rem; margin-top: 5px;">
-                Hecho con <i class="fas fa-heart" style="color: #e53e3e;"></i> para amantes del cine
-            </p>
-        </footer>
+        <!-- All Reviews -->
+        <% if (allReviews && allReviews.length > 0) { %>
+            <h2 style="color: white; margin-bottom: 20px; text-align: center;">
+                <i class="fas fa-star"></i> Todas las Reseñas
+            </h2>
+            <div class="reviews-grid">
+                <% allReviews.forEach(function(review) { %>
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div style="flex: 1;">
+                                <div class="review-movie"><%= review.movie_title %></div>
+                                <div class="review-title"><%= review.title %></div>
+                            </div>
+                        </div>
+                        <div class="review-rating">
+                            <% for (var i = 0; i < 5; i++) { %>
+                                <% if (i < review.rating) { %>
+                                    ★
+                                <% } else { %>
+                                    ☆
+                                <% } %>
+                            <% } %>
+                            (<%= review.rating %>/5)
+                        </div>
+                        <div class="review-content">
+                            <%= review.content.length > 150 ? review.content.substring(0, 150) + '...' : review.content %>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="review-author">Por: <%= review.username %></span>
+                            <span class="review-date">
+                                <%= new Date(review.created_at).toLocaleDateString('es-ES') %>
+                            </span>
+                        </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <a href="/review/<%= review.id %>" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Ver Reseña Completa
+                            </a>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="fas fa-film"></i>
+                <h3>No hay reseñas todavía</h3>
+                <p>Sé el primero en compartir tu opinión sobre una película o serie.</p>
+                <% if (user) { %>
+                    <a href="/reviews/new" class="btn btn-success mt-3">
+                        <i class="fas fa-plus-circle"></i> Crear Primera Reseña
+                    </a>
+                <% } else { %>
+                    <a href="/register" class="btn btn-success mt-3">
+                        <i class="fas fa-user-plus"></i> Regístrate para Comenzar
+                    </a>
+                <% } %>
+            </div>
+        <% } %>
     </div>
 
-    <!-- En views/index.ejs - Reemplazar las secciones de reseñas -->
-
-<!-- Featured Reviews Section -->
-<section class="section">
-    <h2 class="section-title">
-        <i class="fas fa-star"></i>Reseñas Destacadas
-    </h2>
-    
-    <% if (featuredReviews.length > 0) { %>
-        <div class="reviews-grid">
-            <% featuredReviews.forEach(review => { %>
-                <a href="/review/<%= review.id %>" class="review-card featured" style="text-decoration: none; color: inherit;">
-                    <div class="review-header">
-                        <h3 class="review-title"><%= review.title %></h3>
-                        <div class="rating">
-                            <%= '★'.repeat(review.rating) %><%= '☆'.repeat(5 - review.rating) %>
-                        </div>
-                    </div>
-                    
-                    <div class="movie-title">
-                        <i class="fas fa-video"></i><%= review.movie_title %>
-                    </div>
-                    
-                    <p class="review-content">
-                        <%= review.content.length > 120 ? 
-                            review.content.substring(0, 120) + '...' : 
-                            review.content %>
-                    </p>
-                    
-                    <div class="review-footer">
-                        <div class="review-author">
-                            <i class="fas fa-user"></i>
-                            <%= review.username %>
-                        </div>
-                        <div class="review-date">
-                            <%= new Date(review.created_at).toLocaleDateString() %>
-                        </div>
-                    </div>
-                </a>
-            <% }); %>
-        </div>
-    <% } else { %>
-        <!-- ... (mantener el empty state) -->
-    <% } %>
-</section>
-
-<!-- All Reviews Section -->
-<section class="section" id="all-reviews">
-    <h2 class="section-title">
-        <i class="fas fa-list"></i>Todas las Reseñas
-    </h2>
-    
-    <% if (allReviews.length > 0) { %>
-        <div class="reviews-grid">
-            <% allReviews.forEach(review => { %>
-                <a href="/review/<%= review.id %>" class="review-card" style="text-decoration: none; color: inherit;">
-                    <div class="review-header">
-                        <h3 class="review-title"><%= review.title %></h3>
-                        <div class="rating">
-                            <%= '★'.repeat(review.rating) %><%= '☆'.repeat(5 - review.rating) %>
-                        </div>
-                    </div>
-                    
-                    <div class="movie-title">
-                        <i class="fas fa-video"></i><%= review.movie_title %>
-                    </div>
-                    
-                    <p class="review-content">
-                        <%= review.content.length > 120 ? 
-                            review.content.substring(0, 120) + '...' : 
-                            review.content %>
-                    </p>
-                    
-                    <div class="review-footer">
-                        <div class="review-author">
-                            <i class="fas fa-user"></i>
-                            <%= review.username %>
-                        </div>
-                        <div class="review-date">
-                            <%= new Date(review.created_at).toLocaleDateString() %>
-                        </div>
-                    </div>
-                </a>
-            <% }); %>
-        </div>
-    <% } else { %>
-        <!-- ... (mantener el empty state) -->
-    <% } %>
-</section>
-
     <script>
-        // Efectos de hover suaves
+        // Función para mostrar mensajes temporales
         document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.review-card');
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px)';
+            // Ocultar mensajes después de 5 segundos
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.5s ease';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
                 });
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-            });
-
-            // Smooth scroll para los enlaces
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
+            }, 5000);
         });
     </script>
 </body>

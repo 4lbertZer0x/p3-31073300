@@ -25,7 +25,6 @@
             margin: 0 auto;
         }
 
-        /* Header */
         .header {
             background: white;
             border-radius: 15px;
@@ -88,7 +87,6 @@
             font-size: 0.8rem;
         }
 
-        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -121,7 +119,6 @@
             font-size: 1rem;
         }
 
-        /* Sections */
         .section {
             background: white;
             border-radius: 15px;
@@ -139,7 +136,6 @@
             gap: 10px;
         }
 
-        /* Tables */
         .table-container {
             overflow-x: auto;
             margin-top: 15px;
@@ -167,7 +163,6 @@
             background: #f7fafc;
         }
 
-        /* Badges */
         .badge {
             padding: 4px 8px;
             border-radius: 12px;
@@ -178,15 +173,15 @@
         .badge-admin { background: #fed7d7; color: #c53030; }
         .badge-user { background: #c6f6d5; color: #276749; }
         .badge-featured { background: #fefcbf; color: #744210; }
+        .badge-active { background: #c6f6d5; color: #276749; }
+        .badge-inactive { background: #fed7d7; color: #c53030; }
 
-        /* Action Buttons */
         .action-buttons {
             display: flex;
             gap: 5px;
             flex-wrap: wrap;
         }
 
-        /* Messages */
         .alert {
             padding: 15px 20px;
             border-radius: 8px;
@@ -206,14 +201,6 @@
             border-color: #e53e3e;
         }
 
-        .alert-info {
-            background: #bee3f8;
-            color: #2b6cb0;
-            border-color: #4299e1;
-            margin-bottom: 20px;
-        }
-
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -226,7 +213,6 @@
             color: #cbd5e0;
         }
 
-        /* Admin Actions */
         .admin-actions {
             display: flex;
             gap: 10px;
@@ -234,7 +220,6 @@
             flex-wrap: wrap;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -249,31 +234,10 @@
                 flex-direction: column;
             }
         }
-
-        /* Debug Info */
-        .debug-info {
-            background: #fffaf0;
-            border: 1px solid #ed8936;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            font-family: monospace;
-            font-size: 0.85rem;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Debug Information -->
-        <div class="debug-info">
-            <h5>🔧 Información de Sesión (DEBUG):</h5>
-            <p><strong>Usuario ID:</strong> <%= user.id %></p>
-            <p><strong>Nombre:</strong> <%= user.username %></p>
-            <p><strong>Rol:</strong> <span class="badge <%= user.role === 'admin' ? 'badge-admin' : 'badge-user' %>"><%= user.role %></span></p>
-            <p><strong>Email:</strong> <%= user.email %></p>
-        </div>
-
-        <!-- Header -->
         <div class="header">
             <div class="logo">
                 <i class="fas fa-film"></i>
@@ -292,7 +256,6 @@
             </div>
         </div>
 
-        <!-- Alert Messages -->
         <% if (success) { %>
             <div class="alert alert-success">
                 <i class="fas fa-check-circle"></i> <%= success %>
@@ -305,7 +268,6 @@
             </div>
         <% } %>
 
-        <!-- Admin Actions -->
         <div class="admin-actions">
             <a href="/admin/users/new" class="btn btn-success">
                 <i class="fas fa-user-plus"></i> Nuevo Usuario
@@ -313,15 +275,11 @@
             <a href="/admin/reviews/new" class="btn btn-success">
                 <i class="fas fa-plus-circle"></i> Nueva Reseña
             </a>
-            <a href="/" class="btn btn-info" target="_blank">
-                <i class="fas fa-eye"></i> Ver Sitio
-            </a>
-            <a href="/debug-session" class="btn btn-warning">
-                <i class="fas fa-bug"></i> Debug Sesión
+            <a href="/admin/movies/new" class="btn btn-success">
+                <i class="fas fa-video"></i> Nueva Película/Serie
             </a>
         </div>
 
-        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon" style="color: #4299e1;">
@@ -354,29 +312,97 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon" style="color: #9f7aea;">
-                    <i class="fas fa-film"></i>
+                <div class="stat-icon" style="color: #805ad5;">
+                    <i class="fas fa-video"></i>
                 </div>
                 <div class="stat-number">
-                    <% 
-                        var movieCount = 0;
-                        if (reviews && reviews.length > 0) {
-                            var movies = [];
-                            reviews.forEach(function(review) {
-                                if (!movies.includes(review.movie_title)) {
-                                    movies.push(review.movie_title);
-                                }
-                            });
-                            movieCount = movies.length;
-                        }
-                    %>
-                    <%= movieCount %>
+                    <%= movies ? movies.length : 0 %>
                 </div>
-                <div class="stat-label">Películas</div>
+                <div class="stat-label">Películas/Series</div>
             </div>
         </div>
 
-        <!-- Users Section -->
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="section-title">
+                    <i class="fas fa-video"></i> Gestión de Películas y Series
+                </h2>
+                <a href="/admin/movies/new" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus-circle"></i> Agregar Película/Serie
+                </a>
+            </div>
+
+            <% if (movies && movies.length > 0) { %>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Año</th>
+                                <th>Género</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% movies.forEach(function(movie) { %>
+                                <tr>
+                                    <td><strong>#<%= movie.id %></strong></td>
+                                    <td>
+                                        <strong><%= movie.title %></strong>
+                                        <% if (movie.description) { %>
+                                            <br><small style="color: #718096;"><%= movie.description.substring(0, 50) %>...</small>
+                                        <% } %>
+                                    </td>
+                                    <td><%= movie.year %></td>
+                                    <td><%= movie.genre %></td>
+                                    <td>
+                                        <% if (movie.is_active) { %>
+                                            <span class="badge badge-active">Activa</span>
+                                        <% } else { %>
+                                            <span class="badge badge-inactive">Inactiva</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="action-buttons">
+                                        <a href="/admin/movies/<%= movie.id %>/edit" class="btn btn-primary btn-sm" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <% if (movie.is_active) { %>
+                                            <form action="/admin/movies/<%= movie.id %>/delete" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-warning btn-sm" 
+                                                        onclick="return confirm('¿Desactivar <%= movie.title %>?')"
+                                                        title="Desactivar">
+                                                    <i class="fas fa-eye-slash"></i>
+                                                </button>
+                                            </form>
+                                        <% } else { %>
+                                            <form action="/admin/movies/<%= movie.id %>/activate" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-success btn-sm" 
+                                                        onclick="return confirm('¿Activar <%= movie.title %>?')"
+                                                        title="Activar">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </form>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <i class="fas fa-video"></i>
+                    <h3>No hay películas o series</h3>
+                    <p>Comienza agregando la primera película o serie.</p>
+                    <a href="/admin/movies/new" class="btn btn-success mt-3">
+                        <i class="fas fa-plus-circle"></i> Crear Primera Película/Serie
+                    </a>
+                </div>
+            <% } %>
+        </div>
+
         <div class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 class="section-title">
@@ -453,7 +479,6 @@
             <% } %>
         </div>
 
-        <!-- Reviews Section -->
         <div class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 class="section-title">
@@ -501,15 +526,12 @@
                                     <td><%= review.username %></td>
                                     <td>
                                         <% if (review.is_featured) { %>
-                                            <span class="badge badge-featured">⭐ Destacada</span>
+                                            <span class="badge badge-featured">Destacada</span>
                                         <% } else { %>
                                             <span style="color: #718096;">-</span>
                                         <% } %>
                                     </td>
                                     <td class="action-buttons">
-                                        <a href="/review/<%= review.id %>" class="btn btn-info btn-sm" target="_blank" title="Ver reseña">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
                                         <a href="/admin/reviews/<%= review.id %>/edit" class="btn btn-primary btn-sm" title="Editar reseña">
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -546,9 +568,7 @@
     </div>
 
     <script>
-        // Confirmación para acciones
         document.addEventListener('DOMContentLoaded', function() {
-            // Agregar confirmación a todos los formularios de eliminación
             var deleteForms = document.querySelectorAll('form[action*="/delete"]');
             deleteForms.forEach(function(form) {
                 form.addEventListener('submit', function(e) {
@@ -558,7 +578,6 @@
                 });
             });
 
-            // Agregar confirmación a toggle featured
             var toggleLinks = document.querySelectorAll('a[href*="/toggle-featured"]');
             toggleLinks.forEach(function(link) {
                 link.addEventListener('click', function(e) {
@@ -568,14 +587,6 @@
                 });
             });
         });
-
-        // Función para recargar la página
-        function refreshPage() {
-            window.location.reload();
-        }
-
-        // Auto-recargar cada 2 minutos (opcional)
-        // setTimeout(refreshPage, 120000);
     </script>
 </body>
 </html>
