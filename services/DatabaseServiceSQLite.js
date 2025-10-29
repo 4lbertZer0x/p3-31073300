@@ -18,9 +18,12 @@ class DatabaseServiceSQLite {
       console.log('🔧 Inicializando SQLite...');
       console.log('📁 Ruta de base de datos:', this.dbPath);
       
-      const dir = path.dirname(this.dbPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      // En producción (Vercel), /tmp ya existe
+      if (process.env.NODE_ENV !== 'production') {
+        const dir = path.dirname(this.dbPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
       }
 
       this.db = await open({
@@ -553,8 +556,8 @@ class DatabaseServiceSQLite {
       // Obtener la reseña antes de eliminarla para borrar la imagen si es necesario
       const review = await this.getReviewById(id);
       
-      // Eliminar la imagen asociada si existe y no es la default
-      if (review && review.poster_url && !review.poster_url.includes('default-poster')) {
+      // Eliminar la imagen asociada si existe y no es la default (solo en desarrollo)
+      if (process.env.NODE_ENV !== 'production' && review && review.poster_url && !review.poster_url.includes('default-poster')) {
         const imagePath = path.join(__dirname, '..', 'public', review.poster_url);
         if (fs.existsSync(imagePath)) {
           fs.unlinkSync(imagePath);
@@ -595,10 +598,11 @@ class DatabaseServiceSQLite {
       const movies = await this.db.all(
         `SELECT DISTINCT movie_title, 
                 COUNT(*) as review_count,
-                AVG(rating) as avg_rating
+                AVG(rating) as avg_rating,
+                MAX(created_at) as latest_review
          FROM reviews 
          GROUP BY movie_title 
-         ORDER BY review_count DESC`
+         ORDER BY review_count DESC, latest_review DESC`
       );
       return movies;
     } catch (error) {
