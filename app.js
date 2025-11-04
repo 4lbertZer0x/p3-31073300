@@ -45,16 +45,26 @@ const JWT_SECRET = process.env.JWT_SECRET || 'cinecriticas-jwt-secret-2024-super
 console.log('🔐 JWT Configurado');
 
 // ================= CONFIGURACIÓN SWAGGER =================
-/**
- * @swagger
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- */
+const { swaggerUi, specs } = require('./config/swagger');
+const swaggerOptions = {
+  explorer: true,
+  customCss: `
+    .swagger-ui .topbar { display: none }
+    .swagger-ui .info .title { color: #e50914; }
+    .swagger-ui .btn.authorize { background-color: #e50914; border-color: #e50914; }
+    .swagger-ui .btn.authorize:hover { background-color: #b2070f; }
+  `,
+  customSiteTitle: 'CineCríticas API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    docExpansion: 'none'
+  }
+};
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
+
+console.log('📚 Swagger UI disponible en: http://localhost:' + PORT + '/api-docs');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
@@ -205,7 +215,7 @@ const requireAdmin = (req, res, next) => {
  * /health:
  *   get:
  *     summary: Verificar estado del servidor
- *     description: Endpoint de salud para verificar que la API está funcionando
+ *     description: Endpoint de salud para verificar que la API está funcionando correctamente
  *     tags:
  *       - Health
  *     responses:
@@ -215,14 +225,29 @@ const requireAdmin = (req, res, next) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HealthResponse'
+ *             examples:
+ *               success:
+ *                 summary: Estado saludable
+ *                 value:
+ *                   status: "OK"
+ *                   timestamp: "2024-01-01T00:00:00.000Z"
+ *                   environment: "development"
+ *                   version: "1.0.0"
+ *                   database: "connected"
  *       500:
  *         description: Error del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    database: 'connected',
     auth: 'JWT + Sessions Hybrid'
   });
 });
@@ -293,7 +318,7 @@ app.get('/login', (req, res) => {
  * /auth/login:
  *   post:
  *     summary: Iniciar sesión de usuario
- *     description: Autentica un usuario y devuelve un token JWT
+ *     description: Autentica un usuario y devuelve un token JWT para usar en las APIs
  *     tags:
  *       - Authentication
  *     requestBody:
@@ -308,9 +333,12 @@ app.get('/login', (req, res) => {
  *             properties:
  *               username:
  *                 type: string
+ *                 description: Nombre de usuario
  *                 example: usuario
  *               password:
  *                 type: string
+ *                 description: Contraseña del usuario
+ *                 format: password
  *                 example: password123
  *     responses:
  *       200:
@@ -319,6 +347,24 @@ app.get('/login', (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/AuthResponse'
+ *             examples:
+ *               success:
+ *                 summary: Login exitoso
+ *                 value:
+ *                   success: true
+ *                   message: "Login exitoso"
+ *                   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   user:
+ *                     id: 1
+ *                     username: "usuario"
+ *                     email: "usuario@example.com"
+ *                     role: "user"
+ *       400:
+ *         description: Error de validación
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
  *       401:
  *         description: Credenciales inválidas
  *         content:
@@ -327,6 +373,10 @@ app.get('/login', (req, res) => {
  *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Error del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 app.post('/login', async (req, res) => {
   try {
@@ -441,7 +491,7 @@ app.get('/register', (req, res) => {
  * /auth/register:
  *   post:
  *     summary: Registrar nuevo usuario
- *     description: Crea una nueva cuenta de usuario
+ *     description: Crea una nueva cuenta de usuario en el sistema
  *     tags:
  *       - Authentication
  *     requestBody:
@@ -460,17 +510,23 @@ app.get('/register', (req, res) => {
  *                 type: string
  *                 minLength: 3
  *                 maxLength: 30
+ *                 description: Nombre de usuario único
  *                 example: nuevo_usuario
  *               email:
  *                 type: string
  *                 format: email
+ *                 description: Correo electrónico válido
  *                 example: nuevo@example.com
  *               password:
  *                 type: string
  *                 minLength: 6
+ *                 format: password
+ *                 description: Contraseña segura
  *                 example: password123
  *               confirmPassword:
  *                 type: string
+ *                 format: password
+ *                 description: Confirmación de la contraseña
  *                 example: password123
  *     responses:
  *       201:
@@ -478,24 +534,19 @@ app.get('/register', (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Cuenta creada exitosamente
- *                 user:
- *                   $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/SuccessResponse'
  *       400:
  *         description: Error de validación o usuario existente
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ValidationError'
  *       500:
  *         description: Error del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 app.post('/register', async (req, res) => {
   try {
@@ -1248,27 +1299,69 @@ app.post('/admin/movies/:id/activate', requireAdmin, async (req, res) => {
  * /api/reviews:
  *   get:
  *     summary: Obtener todas las reseñas
- *     description: Retorna la lista completa de reseñas (público)
+ *     description: Retorna la lista completa de reseñas públicas con información de usuarios
  *     tags:
  *       - Reviews
+ *     parameters:
+ *       - in: query
+ *         name: featured
+ *         schema:
+ *           type: boolean
+ *         description: Filtrar solo reseñas destacadas
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Límite de reseñas a retornar (default 20)
  *     responses:
  *       200:
  *         description: Lista de reseñas obtenida exitosamente
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Review'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 15
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Review'
  *       500:
  *         description: Error del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 app.get('/api/reviews', async (req, res) => {
   try {
-    const reviews = await DatabaseService.getAllReviews();
-    res.json(reviews);
+    const { featured, limit = 20 } = req.query;
+    let reviews = await DatabaseService.getAllReviews();
+    
+    if (featured === 'true') {
+      reviews = reviews.filter(review => review.is_featured);
+    }
+    
+    reviews = reviews.slice(0, parseInt(limit));
+    
+    res.json({
+      success: true,
+      count: reviews.length,
+      data: reviews
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Error del servidor' });
+    console.error('Error obteniendo reseñas:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Error del servidor al obtener reseñas' 
+    });
   }
 });
 
