@@ -1,10 +1,10 @@
-// app.js - VERSIÓN ACTUALIZADA CON JWT
-console.log('🚀 Iniciando CineCríticas con JWT...');
+// app.js - VERSIÓN CON SWAGGER INTEGRADO
+console.log('🚀 Iniciando CineCríticas con Swagger...');
 
 // Configuración
 const isProduction = process.env.NODE_ENV === 'production';
 
-console.log('=== CINECRITICAS JWT ===');
+console.log('=== CINECRITICAS SWAGGER ===');
 console.log('Node version:', process.version);
 console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('PORT:', process.env.PORT || 3000);
@@ -26,11 +26,14 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const fs = require('fs');
-const jwt = require('jsonwebtoken'); // ✅ AGREGADO: JWT
+const jwt = require('jsonwebtoken');
+
+// ✅ SWAGGER IMPORT
+const { swaggerUi, specs } = require('./config/swagger');
 
 // Importar servicios SQLite
-const { initializeDatabase } = require('./models');
-const DatabaseService = require('./services/DatabaseServiceSQLite');
+
+const DatabaseService = require('./services/DatabaseService');
 
 const app = express();
 
@@ -40,6 +43,25 @@ const PORT = process.env.PORT || 3000;
 // ================= CONFIGURACIÓN JWT =================
 const JWT_SECRET = process.env.JWT_SECRET || 'cinecriticas-jwt-secret-2024-super-seguro';
 console.log('🔐 JWT Configurado');
+
+// ================= CONFIGURACIÓN SWAGGER =================
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'CineCríticas API Documentation'
+}));
+
+console.log('📚 Swagger UI disponible en: http://localhost:' + PORT + '/api-docs');
 
 // ================= MIDDLEWARES JWT =================
 const verifyToken = (req, res, next) => {
@@ -137,18 +159,15 @@ app.use(session(sessionConfig));
 
 // Middleware para user global (compatibilidad con sesiones y JWT)
 app.use((req, res, next) => {
-  // Prioridad a sesiones para vistas EJS
   if (req.session.user) {
     res.locals.user = req.session.user;
   } 
-  // Si no hay sesión pero hay token JWT en cookies, usarlo para vistas
   else if (req.cookies?.token) {
     try {
       const decoded = jwt.verify(req.cookies.token, JWT_SECRET);
       res.locals.user = decoded;
-      req.session.user = decoded; // Sincronizar con sesión para compatibilidad
+      req.session.user = decoded;
     } catch (error) {
-      // Token inválido, limpiar cookie
       res.clearCookie('token');
     }
   } else {
@@ -181,7 +200,24 @@ const requireAdmin = (req, res, next) => {
 
 // ================= RUTAS PÚBLICAS =================
 
-// Ruta de salud
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Verificar estado del servidor
+ *     description: Endpoint de salud para verificar que la API está funcionando
+ *     tags:
+ *       - Health
+ *     responses:
+ *       200:
+ *         description: Servidor funcionando correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ *       500:
+ *         description: Error del servidor
+ */
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -252,7 +288,46 @@ app.get('/login', (req, res) => {
   });
 });
 
-// ✅ LOGIN ACTUALIZADO CON JWT
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Iniciar sesión de usuario
+ *     description: Autentica un usuario y devuelve un token JWT
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: usuario
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Credenciales inválidas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Error del servidor
+ */
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -361,6 +436,67 @@ app.get('/register', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Registrar nuevo usuario
+ *     description: Crea una nueva cuenta de usuario
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - password
+ *               - confirmPassword
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 30
+ *                 example: nuevo_usuario
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: nuevo@example.com
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 example: password123
+ *               confirmPassword:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       201:
+ *         description: Usuario registrado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Cuenta creada exitosamente
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Error de validación o usuario existente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Error del servidor
+ */
 app.post('/register', async (req, res) => {
   try {
     const { username, email, password, confirmPassword } = req.body;
@@ -967,87 +1103,37 @@ app.post('/admin/reviews/:id/delete', requireAdmin, async (req, res) => {
 // ================= RUTAS ADMIN PELÍCULAS =================
 
 // Nueva película (GET)
-app.post('/admin/movies/new', requireAdmin, upload.single('poster_image'), async (req, res) => {
+app.get('/admin/movies/new', requireAdmin, (req, res) => {
   try {
-    const { title, year, genre, description, type } = req.body;
-    
-    if (!title || !year || !genre || !type) {
-      return res.render('movie-form', {
-        title: 'Nueva Película/Serie - CineCríticas',
-        user: req.session.user,
-        error: 'Todos los campos son requeridos',
-        success: null
-      });
-    }
-
-    // Procesar imagen si se subió
-    let poster_url = '/images/default-poster.jpg';
-    if (req.file) {
-      poster_url = '/uploads/movies/' + req.file.filename;
-      console.log('🖼️ Imagen de película subida:', poster_url);
-    } else if (req.body.poster_url) {
-      // Usar URL externa si se proporcionó
-      poster_url = req.body.poster_url;
-    }
-
-    await DatabaseService.createMovie({
-      title: title.trim(),
-      year: year.trim(),
-      genre: genre.trim(),
-      description: description ? description.trim() : null,
-      type: type,
-      poster_url
-    });
-    
-    res.redirect('/admin?success=Película/Serie creada correctamente');
-  } catch (error) {
-    console.error('Error creando película:', error);
-    // Eliminar archivo si hubo error
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
-    }
     res.render('movie-form', {
       title: 'Nueva Película/Serie - CineCríticas',
       user: req.session.user,
-      error: 'Error creando la película/serie: ' + error.message,
+      movie: null, // No hay película para crear nueva
+      error: null,
+      success: null
+    });
+  } catch (error) {
+    console.error('Error cargando formulario de nueva película:', error);
+    res.render('movie-form', {
+      title: 'Nueva Película/Serie - CineCríticas',
+      user: req.session.user,
+      movie: null,
+      error: 'Error al cargar el formulario',
       success: null
     });
   }
 });
 
-// Crear nueva película (POST)
-app.post('/admin/movies/new', requireAdmin, async (req, res) => {
-  try {
-    const { title, year, genre, description, type, poster_url } = req.body;
-    
-    if (!title || !year || !genre || !type) {
-      return res.render('movie-form', {
-        title: 'Nueva Película/Serie - CineCríticas',
-        user: req.session.user,
-        error: 'Todos los campos son requeridos',
-        success: null
-      });
-    }
-
-    await DatabaseService.createMovie({
-      title: title.trim(),
-      year: year.trim(),
-      genre: genre.trim(),
-      description: description ? description.trim() : null,
-      type: type || 'movie',
-      poster_url: poster_url || '/images/default-poster.jpg'
-    });
-    
-    res.redirect('/admin?success=Película/Serie creada correctamente');
-  } catch (error) {
-    console.error('Error creando película:', error);
-    res.render('movie-form', {
-      title: 'Nueva Película/Serie - CineCríticas',
-      user: req.session.user,
-      error: 'Error creando la película/serie: ' + error.message,
-      success: null
-    });
-  }
+// ✅ RUTA GET PARA NUEVA PELÍCULA
+app.get('/admin/movies/new', requireAdmin, (req, res) => {
+  console.log('📝 Cargando formulario nueva película');
+  res.render('movie-form', {
+    title: 'Nueva Película/Serie - CineCríticas',
+    user: req.session.user,
+    movie: null, // ✅ Esto es importante
+    error: null,
+    success: null
+  });
 });
 
 // Editar película (GET)
@@ -1073,39 +1159,63 @@ app.get('/admin/movies/:id/edit', requireAdmin, async (req, res) => {
 });
 
 // Actualizar película (POST)
-app.post('/admin/movies/:id/edit', requireAdmin, upload.single('poster_image'), async (req, res) => {
+// ✅ RUTA POST PARA CREAR PELÍCULA
+app.post('/admin/movies/new', requireAdmin, upload.single('poster_image'), async (req, res) => {
   try {
-    const { title, year, genre, description, type, poster_url, is_active } = req.body;
+    const { title, year, genre, description, type, poster_url } = req.body;
+    
+    console.log('🎬 Creando nueva película/serie:', { title, year, type });
     
     if (!title || !year || !genre || !type) {
-      return res.redirect(`/admin/movies/${req.params.id}/edit?error=Todos los campos son requeridos`);
+      return res.render('movie-form', {
+        title: 'Nueva Película/Serie - CineCríticas',
+        user: req.session.user,
+        movie: null,
+        error: 'Todos los campos marcados con * son requeridos',
+        success: null
+      });
     }
 
     // Procesar imagen si se subió
-    let final_poster_url = poster_url || '/images/default-poster.jpg';
+    let final_poster_url = '/images/default-poster.jpg';
+    
     if (req.file) {
       final_poster_url = '/uploads/movies/' + req.file.filename;
-      console.log('🖼️ Nueva imagen de película subida:', final_poster_url);
+      console.log('🖼️ Imagen subida:', final_poster_url);
+    } else if (poster_url && poster_url.trim() !== '') {
+      // Usar URL externa si se proporcionó
+      final_poster_url = poster_url.trim();
+      console.log('🌐 Usando URL externa:', final_poster_url);
     }
 
-    await DatabaseService.updateMovie(req.params.id, {
+    await DatabaseService.createMovie({
       title: title.trim(),
       year: year.trim(),
       genre: genre.trim(),
       description: description ? description.trim() : null,
-      type: type || 'movie',
+      type: type,
       poster_url: final_poster_url,
-      is_active: is_active === 'true'
+      is_active: true
     });
     
-    res.redirect('/admin?success=Película/Serie actualizada correctamente');
+    console.log('✅ Película/Serie creada exitosamente:', title);
+    res.redirect('/admin?success=Película/Serie creada correctamente');
+    
   } catch (error) {
-    console.error('Error actualizando película:', error);
-    // Eliminar archivo si hubo error
+    console.error('❌ Error creando película:', error);
+    
+    // Eliminar archivo si hubo error y se subió
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
-    res.redirect(`/admin/movies/${req.params.id}/edit?error=${encodeURIComponent(error.message)}`);
+    
+    res.render('movie-form', {
+      title: 'Nueva Película/Serie - CineCríticas',
+      user: req.session.user,
+      movie: null,
+      error: 'Error creando la película/serie: ' + error.message,
+      success: null
+    });
   }
 });
 
@@ -1133,23 +1243,26 @@ app.post('/admin/movies/:id/activate', requireAdmin, async (req, res) => {
 
 // ================= API ROUTES CON JWT =================
 
-// API para obtener perfil de usuario
-app.get('/api/user/profile', requireAuthAPI, async (req, res) => {
-  try {
-    const user = await DatabaseService.getUserById(req.user.id);
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      created_at: user.created_at
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error del servidor' });
-  }
-});
-
-// API para obtener reseñas
+/**
+ * @swagger
+ * /api/reviews:
+ *   get:
+ *     summary: Obtener todas las reseñas
+ *     description: Retorna la lista completa de reseñas (público)
+ *     tags:
+ *       - Reviews
+ *     responses:
+ *       200:
+ *         description: Lista de reseñas obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Review'
+ *       500:
+ *         description: Error del servidor
+ */
 app.get('/api/reviews', async (req, res) => {
   try {
     const reviews = await DatabaseService.getAllReviews();
@@ -1159,7 +1272,65 @@ app.get('/api/reviews', async (req, res) => {
   }
 });
 
-// API para crear reseña
+/**
+ * @swagger
+ * /api/reviews:
+ *   post:
+ *     summary: Crear nueva reseña
+ *     description: Crea una nueva reseña (requiere autenticación)
+ *     tags:
+ *       - Reviews
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *               - rating
+ *               - movie_title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: 'Gran película'
+ *               content:
+ *                 type: string
+ *                 example: 'Me encantó la trama y los efectos especiales'
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
+ *               movie_title:
+ *                 type: string
+ *                 example: 'Avatar'
+ *     responses:
+ *       201:
+ *         description: Reseña creada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Reseña publicada exitosamente
+ *                 review:
+ *                   $ref: '#/components/schemas/Review'
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: No autenticado
+ *       500:
+ *         description: Error del servidor
+ */
 app.post('/api/reviews', requireAuthAPI, async (req, res) => {
   try {
     const { title, content, rating, movie_title } = req.body;
@@ -1195,7 +1366,69 @@ app.post('/api/reviews', requireAuthAPI, async (req, res) => {
   }
 });
 
-// API para administración (solo admin)
+/**
+ * @swagger
+ * /api/user/profile:
+ *   get:
+ *     summary: Obtener perfil del usuario actual
+ *     description: Retorna la información del usuario autenticado
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Perfil obtenido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: No autenticado
+ *       500:
+ *         description: Error del servidor
+ */
+app.get('/api/user/profile', requireAuthAPI, async (req, res) => {
+  try {
+    const user = await DatabaseService.getUserById(req.user.id);
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: Obtener todos los usuarios (Solo Admin)
+ *     description: Retorna la lista completa de usuarios. Requiere permisos de administrador.
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios obtenida exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: No tiene permisos de administrador
+ *       500:
+ *         description: Error del servidor
+ */
 app.get('/api/admin/users', requireAuthAPI, requireAdminAPI, async (req, res) => {
   try {
     const users = await DatabaseService.getAllUsers();
@@ -1211,7 +1444,32 @@ app.get('/api/admin/users', requireAuthAPI, requireAdminAPI, async (req, res) =>
   }
 });
 
-// API para verificar token
+/**
+ * @swagger
+ * /api/auth/verify:
+ *   get:
+ *     summary: Verificar token JWT
+ *     description: Verifica si un token JWT es válido y retorna la información del usuario
+ *     tags:
+ *       - Authentication
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token válido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Token inválido o expirado
+ */
 app.get('/api/auth/verify', requireAuthAPI, (req, res) => {
   res.json({
     valid: true,
@@ -1241,45 +1499,84 @@ app.use((error, req, res, next) => {
 
 const startServer = async () => {
   try {
-    console.log('🚀 Iniciando servidor con JWT...');
+    console.log('🚀 Iniciando servidor con Sequelize ORM...');
     
-    // Inicializar base de datos
-    const dbSuccess = await initializeDatabase();
+    // ✅ INICIALIZACIÓN MEJORADA CON MÁS VERIFICACIÓN
+    console.log('1. 🔄 Inicializando DatabaseService...');
+    const dbInitialized = await DatabaseService.initialize();
     
-    if (dbSuccess) {
-      console.log('✅ Base de datos inicializada');
+    if (!dbInitialized) {
+      throw new Error('No se pudo inicializar DatabaseService');
+    }
+    console.log('✅ DatabaseService inicializado correctamente');
+    
+    // ✅ VERIFICAR Y CREAR USUARIOS CON MÁS DETALLE
+    console.log('2. 👥 Verificando usuarios de prueba...');
+    const { adminCreated, userCreated } = await DatabaseService.ensureTestUsers();
+    
+    console.log('\n🔐 ESTADO DE USUARIOS:');
+    console.log('   Admin creado:', adminCreated);
+    console.log('   Usuario creado:', userCreated);
+    
+    // ✅ VERIFICACIÓN EXTRA - BUSCAR USUARIOS REALES
+    console.log('3. 🔍 Verificando usuarios en la base de datos...');
+    const adminUser = await DatabaseService.getUserByUsername('admin');
+    const normalUser = await DatabaseService.getUserByUsername('usuario');
+    
+    if (adminUser) {
+      console.log('   ✅ Admin encontrado:', adminUser.username);
+      console.log('   📝 Rol del admin:', adminUser.role);
       
-      // Crear usuarios de prueba de forma segura
-      const { adminCreated, userCreated } = await DatabaseService.ensureTestUsers();
-      
-      console.log('\n🔐 CREDENCIALES DISPONIBLES:');
-      if (adminCreated) {
-        console.log('   👑 ADMINISTRADOR: admin / admin123');
+      // Verificar contraseña inmediatamente
+      try {
+        const passwordValid = await adminUser.verifyPassword('admin123');
+        console.log('   🔐 Contraseña admin123 válida:', passwordValid);
+        
+        if (!passwordValid) {
+          console.log('   ⚠️  ADVERTENCIA: La contraseña no coincide');
+        }
+      } catch (pwError) {
+        console.log('   ❌ Error verificando contraseña:', pwError.message);
       }
-      if (userCreated) {
-        console.log('   👤 USUARIO NORMAL: usuario / password123');
-      }
-      
-      // Mostrar información de debug
-      const debugInfo = await DatabaseService.getDebugInfo();
-      const movies = await DatabaseService.getAllMovies();
-      console.log(`📊 Estado de la base de datos: ${debugInfo.database.usersCount} usuarios, ${movies.length} películas/series, ${debugInfo.database.reviewsCount} reseñas`);
-      console.log('🔐 Sistema de autenticación: JWT + Sesiones (Híbrido)');
+    } else {
+      console.log('   ❌ Admin NO encontrado en BD');
     }
     
+    if (normalUser) {
+      console.log('   ✅ Usuario normal encontrado:', normalUser.username);
+    } else {
+      console.log('   ⚠️  Usuario normal NO encontrado');
+    }
+    
+    // ✅ INFORMACIÓN DE DEBUG
+    const debugInfo = await DatabaseService.getDebugInfo();
+    console.log(`\n📊 ESTADO DE LA BASE DE DATOS:`);
+    console.log(`   Usuarios: ${debugInfo.database.usersCount}`);
+    console.log(`   Películas/Series: ${debugInfo.database.moviesCount}`);
+    console.log(`   Reseñas: ${debugInfo.database.reviewsCount}`);
+    
+    console.log('\n🔐 SISTEMA DE AUTENTICACIÓN: JWT + Sesiones (Híbrido)');
+    console.log('📚 Swagger UI: http://localhost:' + PORT + '/api-docs');
+    
+    // ✅ INICIAR SERVIDOR
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🎬 Servidor corriendo en puerto: ${PORT}`);
-      console.log('✅ ¡CineCríticas con JWT está listo!');
+      console.log(`\n🎬 Servidor corriendo en puerto: ${PORT}`);
+      console.log('✅ ¡CineCríticas con Sequelize ORM está listo!');
       console.log('🌐 Accede en: http://localhost:' + PORT);
+      console.log('📚 Documentación API: http://localhost:' + PORT + '/api-docs');
       console.log('🔐 API Health: http://localhost:' + PORT + '/health');
-      console.log('🔐 Verificar Token: http://localhost:' + PORT + '/api/auth/verify');
       console.log('📱 API Reviews: http://localhost:' + PORT + '/api/reviews');
-      console.log('🐛 Debug: http://localhost:' + PORT + '/debug-users');
-      console.log('🎬 Debug Películas: http://localhost:' + PORT + '/debug-movies');
-      console.log('🔄 Reset DB: http://localhost:' + PORT + '/reset-db (solo desarrollo)');
+      
+      // ✅ MENSAJE FINAL CON CREDENCIALES
+      console.log('\n💡 CREDENCIALES PARA ACCEDER:');
+      console.log('   👑 ADMIN: admin / admin123');
+      console.log('   👤 USER:  usuario / password123');
+      console.log('\n⚠️  Si no puedes acceder, ve a: http://localhost:' + PORT + '/reset-db');
     });
+    
   } catch (error) {
     console.error('💥 Error crítico iniciando servidor:', error);
+    console.error('📝 Stack trace:', error.stack);
     process.exit(1);
   }
 };

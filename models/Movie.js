@@ -8,41 +8,37 @@ const Movie = sequelize.define('Movie', {
     autoIncrement: true
   },
   title: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING(100),
     allowNull: false
   },
   year: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING(10),
     allowNull: false
   },
   genre: {
     type: DataTypes.STRING(100),
     allowNull: false
   },
-  director: {
-    type: DataTypes.STRING(100),
-    allowNull: false
-  },
   description: {
     type: DataTypes.TEXT
   },
-  duration: {
-    type: DataTypes.INTEGER // en minutos
+  type: {
+    type: DataTypes.ENUM('movie', 'series'),
+    defaultValue: 'movie'
   },
-  poster: {
-    type: DataTypes.STRING(500),
-    defaultValue: '/images/default-movie.jpg'
+  poster_url: {
+    type: DataTypes.STRING(255),
+    defaultValue: '/images/default-poster.jpg'
   },
-  rating: {
-    type: DataTypes.FLOAT,
-    defaultValue: 0
-  },
-  is_featured: {
+  is_active: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false
+    defaultValue: true
   }
 }, {
-  tableName: 'movies'
+  tableName: 'movies',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 module.exports = Movie;

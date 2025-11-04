@@ -14,13 +14,17 @@
         }
         .movie-header {
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-                        url('/images/cinema-bg.jpg');
+                        url('https://images.unsplash.com/photo-1489599804158-8b0c78b969e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             color: white;
             padding: 3rem 0;
             margin-bottom: 2rem;
+            position: relative;
         }
+        /* Eliminamos el ::before que estaba cubriendo la imagen */
+        
         .review-card {
             border: none;
             border-radius: 15px;

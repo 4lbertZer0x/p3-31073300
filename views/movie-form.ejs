@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= movie ? 'Editar' : 'Nueva' %> Película/Serie - CineCríticas</title>
+    <title><%= typeof movie !== 'undefined' && movie ? 'Editar' : 'Nueva' %> Película/Serie - CineCríticas</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -292,17 +292,17 @@
         <div class="form-container">
             <h2 class="form-title">
                 <i class="fas fa-video"></i>
-                <%= movie ? 'Editar Película/Serie' : 'Nueva Película/Serie' %>
+                <%= typeof movie !== 'undefined' && movie ? 'Editar Película/Serie' : 'Nueva Película/Serie' %>
             </h2>
 
-            <form action="<%= movie ? '/admin/movies/' + movie.id + '/edit' : '/admin/movies/new' %>" method="POST" enctype="multipart/form-data">
+            <form action="<%= typeof movie !== 'undefined' && movie ? '/admin/movies/' + movie.id + '/edit' : '/admin/movies/new' %>" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="title">Título *</label>
                     <input type="text" 
                            id="title" 
                            name="title" 
                            class="form-control" 
-                           value="<%= movie ? movie.title : '' %>" 
+                           value="<%= typeof movie !== 'undefined' && movie ? movie.title : '' %>" 
                            required 
                            placeholder="Ej: Avengers: Endgame">
                 </div>
@@ -314,7 +314,7 @@
                                id="year" 
                                name="year" 
                                class="form-control" 
-                               value="<%= movie ? movie.year : '' %>" 
+                               value="<%= typeof movie !== 'undefined' && movie ? movie.year : '' %>" 
                                required 
                                placeholder="Ej: 2019 o 2019-2023">
                     </div>
@@ -325,7 +325,7 @@
                                id="genre" 
                                name="genre" 
                                class="form-control" 
-                               value="<%= movie ? movie.genre : '' %>" 
+                               value="<%= typeof movie !== 'undefined' && movie ? movie.genre : '' %>" 
                                required 
                                placeholder="Ej: Acción, Aventura, Ciencia Ficción">
                     </div>
@@ -338,14 +338,14 @@
                             <input type="radio" 
                                    name="type" 
                                    value="movie" 
-                                   <%= (!movie || movie.type === 'movie') ? 'checked' : '' %>>
+                                   <%= (typeof movie === 'undefined' || !movie || movie.type === 'movie') ? 'checked' : '' %>>
                             🎬 Película
                         </label>
                         <label class="radio-option">
                             <input type="radio" 
                                    name="type" 
                                    value="series" 
-                                   <%= (movie && movie.type === 'series') ? 'checked' : '' %>>
+                                   <%= (typeof movie !== 'undefined' && movie && movie.type === 'series') ? 'checked' : '' %>>
                             📺 Serie
                         </label>
                     </div>
@@ -356,7 +356,7 @@
                     <textarea id="description" 
                               name="description" 
                               class="form-control" 
-                              placeholder="Sinopsis o descripción de la película/serie..."><%= movie ? movie.description : '' %></textarea>
+                              placeholder="Sinopsis o descripción de la película/serie..."><%= typeof movie !== 'undefined' && movie ? movie.description : '' %></textarea>
                 </div>
 
                 <!-- Sección de Imagen -->
@@ -389,7 +389,7 @@
                                id="poster_url" 
                                name="poster_url" 
                                class="form-control" 
-                               value="<%= movie ? movie.poster_url : '' %>" 
+                               value="<%= typeof movie !== 'undefined' && movie ? movie.poster_url : '' %>" 
                                placeholder="https://ejemplo.com/poster.jpg">
                         <div class="form-text">
                             Dejar vacío para usar imagen por defecto
@@ -397,7 +397,7 @@
                     </div>
 
                     <!-- Imagen actual (solo en edición) -->
-                    <% if (movie && movie.poster_url && movie.poster_url !== '/images/default-poster.jpg') { %>
+                    <% if (typeof movie !== 'undefined' && movie && movie.poster_url && movie.poster_url !== '/images/default-poster.jpg') { %>
                         <div class="form-group">
                             <label>Imagen Actual:</label>
                             <img src="<%= movie.poster_url %>" 
@@ -411,7 +411,7 @@
                     <% } %>
                 </div>
 
-                <% if (movie) { %>
+                <% if (typeof movie !== 'undefined' && movie) { %>
                     <div class="form-group">
                         <label>Estado</label>
                         <div class="checkbox-group">
@@ -428,12 +428,12 @@
                 <div class="form-actions">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i>
-                        <%= movie ? 'Actualizar' : 'Crear' %> Película/Serie
+                        <%= typeof movie !== 'undefined' && movie ? 'Actualizar' : 'Crear' %> Película/Serie
                     </button>
                     <a href="/admin" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancelar
                     </a>
-                    <% if (movie) { %>
+                    <% if (typeof movie !== 'undefined' && movie) { %>
                         <a href="/admin/movies/<%= movie.id %>/delete" 
                            class="btn btn-danger"
                            onclick="return confirm('¿Estás seguro de desactivar esta película/serie?')">
@@ -520,16 +520,6 @@
                 
                 return true;
             });
-
-            // Si hay imagen actual, mostrar preview
-            <% if (movie && movie.poster_url && movie.poster_url !== '/images/default-poster.jpg') { %>
-                const currentImage = document.querySelector('.current-image');
-                if (currentImage) {
-                    currentImage.onerror = function() {
-                        this.style.display = 'none';
-                    };
-                }
-            <% } %>
         });
     </script>
 </body>

@@ -8,35 +8,32 @@ const Series = sequelize.define('Series', {
     autoIncrement: true
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
   },
   year: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: false
   },
   genre: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.STRING,
     allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT
   },
   seasons: {
     type: DataTypes.INTEGER,
     defaultValue: 1
   },
-  description: {
-    type: DataTypes.TEXT
+  poster_url: {
+    type: DataTypes.STRING,
+    defaultValue: '/images/default-poster.jpg'
   },
-  poster: {
-    type: DataTypes.STRING(500),
-    defaultValue: '/images/default-series.jpg'
-  },
-  rating: {
-    type: DataTypes.FLOAT,
-    defaultValue: 0
-  },
-  is_featured: {
+  is_active: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false
+    defaultValue: true
   }
 }, {
   tableName: 'series'
