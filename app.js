@@ -28,9 +28,6 @@ const multer = require('multer');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 
-// ✅ SWAGGER IMPORT
-const { swaggerUi, specs } = require('./config/swagger');
-
 // Importar servicios SQLite
 
 const DatabaseService = require('./services/DatabaseService');
