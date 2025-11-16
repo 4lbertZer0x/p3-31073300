@@ -175,6 +175,8 @@
         .badge-featured { background: #fefcbf; color: #744210; }
         .badge-active { background: #c6f6d5; color: #276749; }
         .badge-inactive { background: #fed7d7; color: #c53030; }
+        .badge-movie { background: #bee3f8; color: #2c5282; }
+        .badge-series { background: #e9d8fd; color: #553c9a; }
 
         .action-buttons {
             display: flex;
@@ -218,6 +220,10 @@
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
         }
 
         @media (max-width: 768px) {
@@ -341,6 +347,7 @@
                                 <th>Título</th>
                                 <th>Año</th>
                                 <th>Género</th>
+                                <th>Tipo</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -355,8 +362,13 @@
                                             <br><small style="color: #718096;"><%= movie.description.substring(0, 50) %>...</small>
                                         <% } %>
                                     </td>
-                                    <td><%= movie.year %></td>
-                                    <td><%= movie.genre %></td>
+                                    <td><%= movie.release_year %></td>
+                                    <td><%= movie.genre || 'N/A' %></td>
+                                    <td>
+                                        <span class="badge <%= movie.type === 'series' ? 'badge-series' : 'badge-movie' %>">
+                                            <%= movie.type === 'series' ? 'SERIE' : 'PELÍCULA' %>
+                                        </span>
+                                    </td>
                                     <td>
                                         <% if (movie.is_active) { %>
                                             <span class="badge badge-active">Activa</span>
@@ -443,10 +455,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <%= new Date(userItem.created_at).toLocaleDateString('es-ES') %>
+                                        <%= new Date(userItem.createdAt).toLocaleDateString('es-ES') %>
                                     </td>
                                     <td class="action-buttons">
-                                        <a href="/admin/users/<%= userItem.id %>/edit" class="btn btn-sm btn-warning">
+                                        <a href="/admin/users/<%= userItem.id %>/edit" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i> Editar
                                         </a>
                                         <% if (userItem.id !== user.id) { %>
@@ -509,6 +521,9 @@
                                     <td><strong>#<%= review.id %></strong></td>
                                     <td>
                                         <strong><%= review.title %></strong>
+                                        <% if (review.content) { %>
+                                            <br><small style="color: #718096;"><%= review.content.substring(0, 60) %>...</small>
+                                        <% } %>
                                     </td>
                                     <td><%= review.movie_title %></td>
                                     <td>
@@ -523,7 +538,9 @@
                                             (<%= review.rating %>/5)
                                         </span>
                                     </td>
-                                    <td><%= review.username %></td>
+                                    <td>
+                                        <%= review.user ? review.user.username : 'Usuario eliminado' %>
+                                    </td>
                                     <td>
                                         <% if (review.is_featured) { %>
                                             <span class="badge badge-featured">Destacada</span>
@@ -537,8 +554,8 @@
                                         </a>
                                         <a href="/admin/reviews/<%= review.id %>/toggle-featured" 
                                            class="btn btn-warning btn-sm"
-                                           onclick="return confirm('¿Cambiar estado destacado de esta reseña?')"
-                                           title="Toggle destacado">
+                                           onclick="return confirm('¿<%= review.is_featured ? 'Quitar' : 'Marcar' %> como destacada esta reseña?')"
+                                           title="<%= review.is_featured ? 'Quitar destacado' : 'Marcar como destacada' %>">
                                             <i class="fas fa-star"></i>
                                         </a>
                                         <form action="/admin/reviews/<%= review.id %>/delete" method="POST" style="display: inline;">
@@ -569,6 +586,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Confirmación para formularios de eliminación
             var deleteForms = document.querySelectorAll('form[action*="/delete"]');
             deleteForms.forEach(function(form) {
                 form.addEventListener('submit', function(e) {
@@ -578,11 +596,24 @@
                 });
             });
 
-            var toggleLinks = document.querySelectorAll('a[href*="/toggle-featured"]');
-            toggleLinks.forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    if (!confirm('¿Cambiar el estado de destacado?')) {
+            // Confirmación para activar/desactivar películas
+            var movieToggleForms = document.querySelectorAll('form[action*="/activate"], form[action*="/delete"]');
+            movieToggleForms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    var action = form.action.includes('/activate') ? 'activar' : 'desactivar';
+                    if (!confirm('¿Estás seguro de que quieres ' + action + ' esta película/serie?')) {
                         e.preventDefault();
+                    }
+                });
+            });
+
+            // Mejorar accesibilidad de botones
+            var buttons = document.querySelectorAll('.btn');
+            buttons.forEach(function(button) {
+                button.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        button.click();
                     }
                 });
             });

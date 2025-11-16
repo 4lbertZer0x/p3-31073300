@@ -8,7 +8,7 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  setupFiles: ['<rootDir>/tests/setup.js'],
   collectCoverageFrom: [
     'services/**/*.js',
     'controllers/**/*.js',

@@ -1,7 +1,7 @@
 const DatabaseService = require('../services/DatabaseService');
 
 class UserController {
-  
+
   /**
    * @swagger
    * /my-reviews:
@@ -23,7 +23,16 @@ class UserController {
    *         description: No autenticado
    */
   static async showUserReviews(req, res) {
-    // ... código existente
+    try {
+      if (!req.user) {
+        return res.status(401).json({ success: false, message: 'No autenticado' });
+      }
+      
+      const reviews = await DatabaseService.getReviewsByUserId(req.user.id);
+      return res.json({ success: true, data: reviews });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
   }
 
   /**
@@ -49,7 +58,17 @@ class UserController {
    *         description: Error del servidor
    */
   static async getProfile(req, res) {
-    // ... código existente
+    try {
+      const user = await DatabaseService.getUserById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+      }
+      
+      const { password_hash, ...userWithoutPassword } = user;
+      return res.json({ success: true, data: userWithoutPassword });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
   }
 
   /**
@@ -79,7 +98,16 @@ class UserController {
    *         description: Error del servidor
    */
   static async listUsers(req, res) {
-    // ... código existente
+    try {
+      const users = await DatabaseService.getAllUsers();
+      const usersWithoutPasswords = users.map(user => {
+        const { password_hash, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      return res.json({ success: true, data: usersWithoutPasswords });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
   }
 }
 

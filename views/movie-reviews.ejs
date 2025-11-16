@@ -139,6 +139,10 @@
                     <a href="/reviews/new?movie=<%= encodeURIComponent(movieTitle) %>" class="btn btn-success btn-lg">
                         <i class="fas fa-plus-circle"></i> Escribir Reseña de "<%= movieTitle %>"
                     </a>
+                    <!-- Botón de compra: enlaza a la página de compra para esta película/serie -->
+                    <a href="/purchase/movie?title=<%= encodeURIComponent(movieTitle) %>" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-cart"></i> Comprar "<%= movieTitle %>"
+                    </a>
                 </div>
                 <% } else { %>
                 <div class="alert alert-info text-center">
@@ -310,6 +314,10 @@
 
                                     <!-- Acciones -->
                                     <div class="d-grid gap-2">
+                                            <!-- Botón de compra dentro de cada reseña (útil si queremos comprar desde la reseña) -->
+                                            <a href="/purchase/movie?title=<%= encodeURIComponent(movieTitle) %>" class="btn btn-outline-success btn-sm mb-2">
+                                                <i class="fas fa-shopping-cart"></i> Comprar película/serie
+                                            </a>
                                         <% if (user && user.id === review.user_id) { %>
                                             <a href="/admin/reviews/<%= review.id %>/edit" 
                                                class="btn btn-outline-primary btn-sm">

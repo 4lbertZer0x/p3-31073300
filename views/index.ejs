@@ -54,6 +54,12 @@
             gap: 15px;
         }
 
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -72,10 +78,16 @@
         .btn-success { background: #48bb78; color: white; }
         .btn-danger { background: #e53e3e; color: white; }
         .btn-secondary { background: #718096; color: white; }
+        .btn-info { background: #0bc5ea; color: white; }
 
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85rem;
         }
 
         /* Hero Section */
@@ -218,6 +230,26 @@
             border-color: #e53e3e;
         }
 
+        .membership-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #744210;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .vip-badge {
+            background: linear-gradient(135deg, #9f7aea, #d6bcfa);
+            color: #44337a;
+        }
+
+        .premium-badge {
+            background: linear-gradient(135deg, #4299e1, #90cdf4);
+            color: #1a365d;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -227,6 +259,11 @@
             .user-actions {
                 flex-direction: column;
                 align-items: center;
+            }
+
+            .user-menu {
+                flex-wrap: wrap;
+                justify-content: center;
             }
         }
     </style>
@@ -242,28 +279,46 @@
             
             <div class="user-info">
                 <% if (user) { %>
-                    <span>Hola, <strong><%= user.username %></strong></span>
-                    <% if (user.role === 'admin') { %>
-                        <a href="/admin" class="btn btn-primary">
-                            <i class="fas fa-cog"></i> Panel Admin
+                    <div class="user-menu">
+                        <span style="margin-right: 10px;">
+                            Hola, <strong><%= user.username %></strong>
+                            <% if (user.membership_type && user.membership_type !== 'free') { %>
+                                <span class="membership-badge <%= user.membership_type === 'vip' ? 'vip-badge' : 'premium-badge' %>">
+                                    <i class="fas fa-crown"></i> <%= user.membership_type.toUpperCase() %>
+                                </span>
+                            <% } %>
+                        </span>
+                        
+                        <!-- NUEVO: Botón de Perfil de Usuario -->
+                        <a href="/user/profile" class="btn btn-info btn-sm">
+                            <i class="fas fa-user-circle"></i> Mi Perfil
                         </a>
-                    <% } else { %>
-                        <a href="/reviews/new" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Nueva Reseña
-                        </a>
-                    <% } %>
-                    <form method="POST" action="/logout" style="display: inline;">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                        </button>
-                    </form>
+
+                        <% if (user.role === 'admin') { %>
+                            <a href="/admin" class="btn btn-primary btn-sm">
+                                <i class="fas fa-cog"></i> Panel Admin
+                            </a>
+                        <% } else { %>
+                            <a href="/reviews/new" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i> Nueva Reseña
+                            </a>
+                        <% } %>
+                        
+                        <form method="POST" action="/logout" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-sign-out-alt"></i> Salir
+                            </button>
+                        </form>
+                    </div>
                 <% } else { %>
-                    <a href="/login" class="btn btn-primary">
-                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-                    </a>
-                    <a href="/register" class="btn btn-secondary">
-                        <i class="fas fa-user-plus"></i> Registrarse
-                    </a>
+                    <div class="user-menu">
+                        <a href="/login" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                        </a>
+                        <a href="/register" class="btn btn-secondary">
+                            <i class="fas fa-user-plus"></i> Registrarse
+                        </a>
+                    </div>
                 <% } %>
             </div>
         </div>
@@ -292,13 +347,21 @@
                         <a href="/reviews/new" class="btn btn-success btn-lg">
                             <i class="fas fa-plus-circle"></i> Crear Nueva Reseña
                         </a>
-                        
+                        <a href="/user/profile" class="btn btn-info btn-lg">
+                            <i class="fas fa-user-cog"></i> Mi Perfil
+                        </a>
+                        <a href="/user/membership" class="btn btn-primary btn-lg">
+                            <i class="fas fa-crown"></i> Membresías
+                        </a>
                     <% } else if (user.role === 'admin') { %>
                         <a href="/admin" class="btn btn-success btn-lg">
                             <i class="fas fa-cog"></i> Panel de Administración
                         </a>
                         <a href="/admin/reviews/new" class="btn btn-primary btn-lg">
                             <i class="fas fa-plus-circle"></i> Crear Reseña
+                        </a>
+                        <a href="/user/profile" class="btn btn-info btn-lg">
+                            <i class="fas fa-user-cog"></i> Mi Perfil
                         </a>
                     <% } %>
                 </div>
@@ -314,7 +377,8 @@
             <% } %>
         </div>
 
-        <!-- Featured Reviews -->
+    <!-- Featured Reviews -->
+    <h1 style="color: white; text-align: center; margin-bottom: 10px;">Reseñas</h1>
         <% if (featuredReviews && featuredReviews.length > 0) { %>
             <h2 style="color: white; margin-bottom: 20px; text-align: center;">
                 <i class="fas fa-fire"></i> Reseñas Destacadas

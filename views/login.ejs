@@ -388,7 +388,7 @@
                 </div>
             <% } %>
 
-            <form action="/login" method="POST" id="loginForm">
+            <form action="/auth/login" method="POST" id="loginForm">
                 <div class="form-group">
                     <label for="username">Usuario o Email</label>
                     <div class="input-with-icon">
@@ -487,16 +487,6 @@
 
             // Auto-focus on username field
             document.getElementById('username').focus();
-
-            User.prototype.verifyPassword = async function(password) {
-            try {
-                const bcrypt = require('bcryptjs');
-                return await bcrypt.compare(password, this.password_hash);
-            } catch (error) {
-                console.error('Error en verifyPassword:', error);
-                return false;
-            }
-            };
         });
     </script>
 </body>

@@ -59,6 +59,14 @@
             color: #718096;
             font-size: 0.9rem;
         }
+        .movie-type-badge {
+            background: #4299e1;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
         .image-preview {
             max-width: 200px;
             max-height: 300px;
@@ -70,6 +78,13 @@
         .form-control:focus {
             border-color: #4299e1;
             box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+        }
+        .review-image-preview {
+            max-width: 300px;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -105,7 +120,7 @@
                             </div>
                         <% } %>
 
-                        <form action="/admin/reviews/new" method="POST" enctype="multipart/form-data">
+                        <form action="<%= editReview ? ('/admin/reviews/' + editReview.id + '/edit') : '/admin/reviews/new' %>" method="POST" enctype="multipart/form-data">
                             <!-- Selección de película desde base de datos -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Selecciona una Película/Serie:</label>
@@ -113,7 +128,7 @@
                                 <% if (movies && movies.length > 0) { %>
                                     <div class="mb-3">
                                         <input type="text" id="movieSearch" class="form-control" 
-                                               placeholder="Buscar película o serie..." 
+                                               placeholder="Buscar película o serie por título, año o género..." 
                                                onkeyup="filterMovies()">
                                     </div>
                                     
@@ -121,20 +136,31 @@
                                         <% movies.forEach(function(movie) { %>
                                             <% if (movie.is_active) { %>
                                                 <div class="movie-item" 
-                                                     onclick="selectMovie(<%= movie.id %>, '<%= movie.title.replace(/'/g, "\\'") %>', '<%= movie.poster_url %>')"
-                                                     data-title="<%= movie.title.toLowerCase() %>"
-                                                     data-year="<%= movie.year.toLowerCase() %>"
-                                                     data-genre="<%= movie.genre.toLowerCase() %>">
-                                                    <img src="<%= movie.poster_url %>" 
-                                                         alt="<%= movie.title %>" 
+                                                     onclick="selectMovie(
+                                                         <%= movie.id %>, 
+                                                         '<%= movie.title ? movie.title.replace(/'/g, "\\'") : "" %>', 
+                                                         '<%= movie.poster_image || "/images/default-poster.jpg" %>'
+                                                     )"
+                                                     data-title="<%= movie.title ? movie.title.toLowerCase() : '' %>"
+                                                     data-year="<%= movie.release_year ? movie.release_year.toString().toLowerCase() : '' %>"
+                                                     data-genre="<%= movie.genre ? movie.genre.toLowerCase() : '' %>"
+                                                     data-type="<%= movie.type ? movie.type.toLowerCase() : 'movie' %>">
+                                                    <img src="<%= movie.poster_image || '/images/default-poster.jpg' %>" 
+                                                         alt="<%= movie.title || 'Sin título' %>" 
                                                          class="movie-poster"
                                                          onerror="this.src='/images/default-poster.jpg'">
                                                     <div class="movie-info">
-                                                        <div class="movie-title"><%= movie.title %></div>
+                                                        <div class="movie-title">
+                                                            <%= movie.title || 'Sin título' %>
+                                                            <span class="movie-type-badge">
+                                                                <%= movie.type === 'series' ? 'SERIE' : 'PELÍCULA' %>
+                                                            </span>
+                                                        </div>
                                                         <div class="movie-year">
-                                                            <%= movie.year %> • <%= movie.genre %>
+                                                            <strong>Año:</strong> <%= movie.release_year || 'No disponible' %> | 
+                                                            <strong>Género:</strong> <%= movie.genre || 'No disponible' %>
                                                             <% if (movie.description) { %>
-                                                                <br><small><%= movie.description.substring(0, 80) %>...</small>
+                                                                <br><small class="text-muted"><%= movie.description.substring(0, 80) %>...</small>
                                                             <% } %>
                                                         </div>
                                                     </div>
@@ -143,14 +169,19 @@
                                         <% }); %>
                                     </div>
                                     
-                                    <input type="hidden" id="movie_id" name="movie_id">
-                                    <input type="hidden" id="movie_title" name="movie_title">
-                                    <input type="hidden" id="poster_url" name="poster_url">
+                                    <input type="hidden" id="movie_id" name="movie_id" value="<%= editReview ? editReview.movie_id : '' %>">
+                                    <input type="hidden" id="movie_title" name="movie_title" value="<%= editReview ? editReview.movie_title : '' %>">
+                                    <input type="hidden" id="poster_url" name="poster_url" value="<%= editReview ? editReview.poster_url : '' %>">
                                     
-                                    <div id="selectedMovie" class="alert alert-info" style="display: none;">
+                                    <div id="selectedMovie" class="alert alert-info" style="display: <%= editReview ? 'block' : 'none' %>;">
                                         <i class="fas fa-check"></i> 
-                                        <span id="selectedMovieText"></span>
-                                        <img id="selectedPoster" src="" class="image-preview">
+                                        <span id="selectedMovieText">
+                                            <%= editReview ? ('Película seleccionada: ' + (editReview.movie_title || 'Sin título')) : '' %>
+                                        </span>
+                                        <img id="selectedPoster" 
+                                             src="<%= editReview && editReview.poster_url ? editReview.poster_url : '/images/default-poster.jpg' %>" 
+                                             class="image-preview" 
+                                             style="display: <%= editReview && editReview.poster_url ? 'block' : 'none' %>">
                                     </div>
                                 <% } else { %>
                                     <div class="alert alert-warning">
@@ -168,7 +199,11 @@
                                     <option value="">Selecciona un usuario</option>
                                     <% if (users && users.length > 0) { %>
                                         <% users.forEach(function(u) { %>
-                                            <option value="<%= u.id %>"><%= u.username %> (<%= u.email %>)</option>
+                                            <option value="<%= u.id %>" <%= editReview && editReview.user_id === u.id ? 'selected' : '' %>>
+                                                <%= u.username || 'Usuario sin nombre' %> 
+                                                <% if (u.email) { %> - <%= u.email %><% } %>
+                                                <% if (u.role === 'admin') { %> (Admin)<% } %>
+                                            </option>
                                         <% }); %>
                                     <% } else { %>
                                         <option value="">No hay usuarios disponibles</option>
@@ -180,51 +215,79 @@
                             <div class="mb-3">
                                 <label for="title" class="form-label fw-bold">Título de la Reseña:</label>
                                 <input type="text" class="form-control" id="title" name="title" 
-                                       placeholder="Ej: 'Una obra maestra del cine moderno'" required>
+                                    value="<%= editReview ? editReview.title : '' %>"
+                                    placeholder="Ej: 'Una obra maestra del cine moderno'" required
+                                    maxlength="255">
+                                <div class="form-text">Máximo 255 caracteres</div>
                             </div>
                             
                             <!-- Calificación -->
                             <div class="mb-3">
                                 <label for="rating" class="form-label fw-bold">Calificación:</label>
                                 <select class="form-select" id="rating" name="rating" required>
-                                    <option value="1">1 ★ - Muy mala</option>
-                                    <option value="2">2 ★★ - Regular</option>
-                                    <option value="3">3 ★★★ - Buena</option>
-                                    <option value="4">4 ★★★★ - Muy buena</option>
-                                    <option value="5" selected>5 ★★★★★ - Excelente</option>
+                                    <option value="">Selecciona una calificación</option>
+                                    <% for (let r=1;r<=5;r++) { %>
+                                        <option value="<%= r %>" 
+                                                <%= editReview && Number(editReview.rating) === r ? 'selected' : ( !editReview && r===5 ? 'selected' : '' ) %>>
+                                            <%= r %> <%= '★'.repeat(r) %><%= '☆'.repeat(5-r) %>
+                                        </option>
+                                    <% } %>
                                 </select>
                             </div>
                             
                             <!-- Contenido/Opinión -->
                             <div class="mb-3">
                                 <label for="content" class="form-label fw-bold">Contenido:</label>
-                                <textarea class="form-control" id="content" name="content" rows="6" 
-                                          placeholder="Escribe el contenido completo de la reseña..." required></textarea>
+                                <textarea class="form-control" id="content" name="content" rows="8" 
+                                          placeholder="Escribe el contenido completo de la reseña..." 
+                                          required
+                                          maxlength="5000"><%= editReview ? editReview.content : '' %></textarea>
+                                <div class="form-text">Máximo 5000 caracteres. Actual: <span id="charCount">0</span>/5000</div>
                             </div>
 
                             <!-- Imagen de la reseña -->
                             <div class="mb-3">
-                                <label for="review_image" class="form-label fw-bold">Imagen de la Reseña (Opcional):</label>
-                                <input type="file" class="form-control" id="review_image" name="review_image" 
-                                       accept="image/*" onchange="previewImage(this)">
-                                <div class="form-text">
-                                    Formatos aceptados: JPG, PNG, GIF. Tamaño máximo: 5MB
-                                </div>
-                                <img id="imagePreview" src="" class="image-preview">
-                            </div>
-
-                            <!-- Opciones adicionales -->
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="is_featured" name="is_featured" value="true">
-                                <label class="form-check-label fw-bold" for="is_featured">
-                                    <i class="fas fa-star"></i> Reseña Destacada
+                                <label for="review_image" class="form-label fw-bold">
+                                    Imagen de la Reseña (Opcional):
                                 </label>
+                                <input type="file" class="form-control" id="review_image" name="review_image" 
+                                       accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                                       onchange="previewReviewImage(this)">
+                                <div class="form-text">
+                                    Formatos permitidos: JPEG, JPG, PNG, GIF, WebP. Tamaño máximo: 5MB.
+                                    <% if (editReview && editReview.review_image) { %>
+                                        <br>Imagen actual: <a href="<%= editReview.review_image %>" target="_blank">Ver imagen</a>
+                                    <% } %>
+                                </div>
+                                <img id="reviewImagePreview" class="review-image-preview" style="display: none;">
+                            </div>
+                            
+                            <!-- Opciones adicionales -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_featured" name="is_featured" value="true" 
+                                               <%= editReview && editReview.is_featured ? 'checked' : '' %>>
+                                        <label class="form-check-label fw-bold" for="is_featured">
+                                            <i class="fas fa-star"></i> Reseña Destacada
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true" 
+                                               <%= !editReview || editReview.is_active ? 'checked' : '' %>>
+                                        <label class="form-check-label fw-bold" for="is_active">
+                                            <i class="fas fa-eye"></i> Reseña Activa
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                 <button type="submit" class="btn btn-success btn-lg me-md-2" id="submitBtn" 
                                         <%= (movies && movies.length > 0) ? '' : 'disabled' %>>
-                                    <i class="fas fa-save"></i> Crear Reseña
+                                    <i class="fas fa-save"></i> <%= editReview ? 'Actualizar Reseña' : 'Crear Reseña' %>
                                 </button>
                                 <a href="/admin" class="btn btn-secondary btn-lg">
                                     <i class="fas fa-times"></i> Cancelar
@@ -249,6 +312,26 @@
         let selectedMovieId = null;
         let selectedMovieTitle = null;
         let selectedPosterUrl = null;
+
+        // Contador de caracteres
+        function updateCharCount() {
+            const content = document.getElementById('content');
+            const charCount = document.getElementById('charCount');
+            if (content && charCount) {
+                charCount.textContent = content.value.length;
+                if (content.value.length > 5000) {
+                    charCount.classList.add('text-danger');
+                } else {
+                    charCount.classList.remove('text-danger');
+                }
+            }
+        }
+
+        // Inicializar contador de caracteres
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharCount();
+            document.getElementById('content').addEventListener('input', updateCharCount);
+        });
 
         // Selección de película
         function selectMovie(movieId, movieTitle, posterUrl) {
@@ -276,8 +359,8 @@
             selectedPoster.style.display = 'block';
             document.getElementById('selectedMovie').style.display = 'block';
             
-            // Habilitar botón de envío
-            document.getElementById('submitBtn').disabled = false;
+            // Habilitar botón de envío si también hay usuario seleccionado
+            updateSubmitButton();
             
             // Sugerir título
             const titleInput = document.getElementById('title');
@@ -286,18 +369,38 @@
             }
         }
 
-        // Filtro de búsqueda
+        // Si estamos en modo edición, inicializar selección desde campos ocultos
+        (function initSelectedMovieFromEdit() {
+            const mid = document.getElementById('movie_id')?.value;
+            const mtitle = document.getElementById('movie_title')?.value;
+            const mposter = document.getElementById('poster_url')?.value;
+            if (mid && mtitle) {
+                selectedMovieId = Number(mid);
+                selectedMovieTitle = mtitle;
+                selectedPosterUrl = mposter || '/images/default-poster.jpg';
+                document.getElementById('selectedMovieText').textContent = `Película seleccionada: ${selectedMovieTitle}`;
+                const sp = document.getElementById('selectedPoster');
+                sp.src = selectedPosterUrl;
+                sp.style.display = 'block';
+                document.getElementById('selectedMovie').style.display = 'block';
+                updateSubmitButton();
+            }
+        })();
+
+        // Filtro de búsqueda mejorado
         function filterMovies() {
             const searchTerm = document.getElementById('movieSearch').value.toLowerCase();
             const movies = document.querySelectorAll('.movie-item');
             let visibleCount = 0;
             
             movies.forEach(movie => {
-                const title = movie.getAttribute('data-title');
-                const year = movie.getAttribute('data-year');
-                const genre = movie.getAttribute('data-genre');
+                const title = movie.getAttribute('data-title') || '';
+                const year = movie.getAttribute('data-year') || '';
+                const genre = movie.getAttribute('data-genre') || '';
+                const type = movie.getAttribute('data-type') || '';
                 
-                if (title.includes(searchTerm) || year.includes(searchTerm) || genre.includes(searchTerm)) {
+                if (title.includes(searchTerm) || year.includes(searchTerm) || 
+                    genre.includes(searchTerm) || type.includes(searchTerm)) {
                     movie.style.display = 'flex';
                     visibleCount++;
                 } else {
@@ -320,12 +423,30 @@
             }
         }
 
-        // Vista previa de imagen
-        function previewImage(input) {
-            const preview = document.getElementById('imagePreview');
+        // Vista previa de imagen de reseña
+        function previewReviewImage(input) {
+            const preview = document.getElementById('reviewImagePreview');
             const file = input.files[0];
             
             if (file) {
+                // Validar tamaño (5MB)
+                const fileSize = file.size / 1024 / 1024;
+                if (fileSize > 5) {
+                    alert('La imagen es demasiado grande. El tamaño máximo permitido es 5MB.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Validar tipo
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Formato de imagen no válido. Use JPEG, PNG, GIF o WebP.');
+                    input.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
                 const reader = new FileReader();
                 
                 reader.onload = function(e) {
@@ -336,6 +457,18 @@
                 reader.readAsDataURL(file);
             } else {
                 preview.style.display = 'none';
+            }
+        }
+
+        // Actualizar estado del botón de envío
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const userId = document.getElementById('user_id').value;
+            
+            if (selectedMovieId && userId) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
             }
         }
 
@@ -350,6 +483,7 @@
             const title = document.getElementById('title').value.trim();
             const content = document.getElementById('content').value.trim();
             const userId = document.getElementById('user_id').value;
+            const rating = document.getElementById('rating').value;
             
             if (!title) {
                 e.preventDefault();
@@ -372,6 +506,13 @@
                 return;
             }
             
+            if (!rating) {
+                e.preventDefault();
+                alert('Por favor, selecciona una calificación.');
+                document.getElementById('rating').focus();
+                return;
+            }
+            
             if (content.length < 10) {
                 e.preventDefault();
                 alert('El contenido de la reseña es demasiado corto. Por favor, escribe al menos 10 caracteres.');
@@ -379,9 +520,16 @@
                 return;
             }
             
+            if (content.length > 5000) {
+                e.preventDefault();
+                alert('El contenido de la reseña es demasiado largo. El máximo permitido es 5000 caracteres.');
+                document.getElementById('content').focus();
+                return;
+            }
+            
             // Validar tamaño de imagen
             const fileInput = document.getElementById('review_image');
-            if (fileInput.files[0]) {
+            if (fileInput && fileInput.files[0]) {
                 const fileSize = fileInput.files[0].size / 1024 / 1024; // MB
                 if (fileSize > 5) {
                     e.preventDefault();
@@ -392,7 +540,7 @@
             
             // Mostrar loading
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <%= editReview ? "Actualizando..." : "Creando..." %>';
             submitBtn.disabled = true;
         });
 
@@ -400,12 +548,12 @@
         document.getElementById('movieSearch')?.focus();
 
         // Validar selección de usuario
-        document.getElementById('user_id').addEventListener('change', function() {
-            const submitBtn = document.getElementById('submitBtn');
-            if (this.value && selectedMovieId) {
-                submitBtn.disabled = false;
-            }
-        });
+        document.getElementById('user_id').addEventListener('change', updateSubmitButton);
+
+        // Validar otros campos requeridos
+        document.getElementById('title').addEventListener('input', updateSubmitButton);
+        document.getElementById('content').addEventListener('input', updateSubmitButton);
+        document.getElementById('rating').addEventListener('change', updateSubmitButton);
     </script>
 </body>
 </html>

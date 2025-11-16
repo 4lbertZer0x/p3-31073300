@@ -109,7 +109,7 @@
                         <% } %>
 
                         <!-- CAMBIO IMPORTANTE: añadir enctype="multipart/form-data" -->
-                        <form action="/admin/reviews/<%= review.id %>/update" method="POST" enctype="multipart/form-data">
+                       <form action="<%= typeof editReview !== 'undefined' && editReview ? ('/admin/reviews/' + editReview.id + '/edit') : '/admin/reviews/new' %>" method="POST" enctype="multipart/form-data"></form>
                             <div class="row">
                                 <!-- Columna izquierda: Información básica -->
                                 <div class="col-md-8">
@@ -149,7 +149,7 @@
                                     
                                     <!-- CAMBIO: Reemplazar input URL por subida de archivo -->
                                     <div class="mb-3">
-                                        <label for="poster_image" class="form-label">
+                                        <label for="review_image" class="form-label">
                                             <i class="fas fa-image"></i> Póster de la Película:
                                         </label>
                                         <div class="file-upload" id="fileUploadArea">
@@ -158,16 +158,16 @@
                                             </div>
                                             <p class="mb-2">Haz clic para seleccionar o arrastra una imagen</p>
                                             <small class="text-muted d-block">Formatos: JPG, PNG, GIF (Máx. 5MB)</small>
-                                            <input type="file" class="form-control d-none" id="poster_image" name="poster_image" 
+                                            <input type="file" class="form-control d-none" id="review_image" name="review_image" 
                                                    accept="image/*">
-                                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="document.getElementById('poster_image').click()">
+                                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="document.getElementById('review_image').click()">
                                                 <i class="fas fa-folder-open"></i> Seleccionar Archivo
                                             </button>
                                         </div>
                                         <div id="fileName" class="mt-2 text-success"></div>
                                         
-                                        <!-- Campo oculto para mantener la imagen actual -->
-                                        <input type="hidden" name="current_poster" value="<%= review.poster_url %>">
+                                        <!-- Campo oculto para mantener la imagen actual (nombre coincide con el esperado por el controller) -->
+                                        <input type="hidden" name="poster_url" value="<%= review.poster_url %>">
                                         
                                         <div class="form-text">
                                             <% if (review.poster_url && !review.poster_url.includes('default-poster')) { %>
@@ -312,7 +312,7 @@
             }
             
             // Manejo de subida de archivos
-            const fileInput = document.getElementById('poster_image');
+            const fileInput = document.getElementById('review_image');
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileName = document.getElementById('fileName');
             const posterPreview = document.getElementById('posterPreview');

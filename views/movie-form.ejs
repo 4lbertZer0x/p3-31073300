@@ -6,6 +6,7 @@
     <title><%= typeof movie !== 'undefined' && movie ? 'Editar' : 'Nueva' %> Película/Serie - CineCríticas</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Tus estilos CSS existentes se mantienen igual */
         * {
             margin: 0;
             padding: 0;
@@ -314,7 +315,7 @@
                                id="year" 
                                name="year" 
                                class="form-control" 
-                               value="<%= typeof movie !== 'undefined' && movie ? movie.year : '' %>" 
+                               value="<%= typeof movie !== 'undefined' && movie ? movie.release_year : '' %>" 
                                required 
                                placeholder="Ej: 2019 o 2019-2023">
                     </div>
@@ -329,6 +330,20 @@
                                required 
                                placeholder="Ej: Acción, Aventura, Ciencia Ficción">
                     </div>
+                </div>
+
+                <!-- Precio para la compra (opcional) -->
+                <div class="form-group">
+                    <label for="price">Precio (usd)</label>
+                    <input type="number"
+                           id="price"
+                           name="price"
+                           class="form-control"
+                           step="0.01"
+                           min="0"
+                           value="<%= typeof movie !== 'undefined' && movie && typeof movie.price !== 'undefined' && movie.price !== null ? Number(movie.price).toFixed(2) : '' %>"
+                           placeholder="Ej: 3.99">
+                    <div class="form-text">Precio que se usará para la compra de esta película. Dejar vacío para usar el precio por defecto.</div>
                 </div>
 
                 <div class="form-group">
@@ -359,51 +374,51 @@
                               placeholder="Sinopsis o descripción de la película/serie..."><%= typeof movie !== 'undefined' && movie ? movie.description : '' %></textarea>
                 </div>
 
-                <!-- Sección de Imagen -->
+                <!-- Sección de Imagen CORREGIDA -->
                 <div class="image-section">
                     <div class="image-section-title">
                         <i class="fas fa-image"></i>
                         Imagen de la Película/Serie
                     </div>
 
-                    <!-- Opción 1: Subir archivo -->
+                    <!-- Opción 1: Subir archivo (CORREGIDO - este es el campo que usa Multer) -->
                     <div class="form-group">
                         <label for="poster_image">Subir Imagen:</label>
                         <input type="file" 
-                               id="poster_image" 
-                               name="poster_image" 
-                               class="form-control" 
-                               accept="image/*"
-                               onchange="previewImage(this)">
+                            id="poster_image" 
+                            name="poster_image" 
+                            class="form-control" 
+                            accept="image/*"
+                            onchange="previewImage(this)">
                         <div class="form-text">
-                            Formatos: JPG, PNG, GIF. Tamaño máximo: 5MB
+                            Formatos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB
                         </div>
                         <!-- Vista previa de nueva imagen -->
                         <img id="imagePreview" src="" class="image-preview">
                     </div>
 
-                    <!-- Opción 2: URL externa -->
+                    <!-- Opción 2: URL externa (para respaldo) -->
                     <div class="form-group">
-                        <label for="poster_url">O usar URL Externa:</label>
-                        <input type="url" 
-                               id="poster_url" 
-                               name="poster_url" 
-                               class="form-control" 
-                               value="<%= typeof movie !== 'undefined' && movie ? movie.poster_url : '' %>" 
-                               placeholder="https://ejemplo.com/poster.jpg">
+                        <label for="poster_url">O usar URL de Imagen (Opcional):</label>
+                        <input type="text" 
+                            id="poster_url" 
+                            name="poster_url" 
+                            class="form-control" 
+                            placeholder="https://ejemplo.com/poster.jpg"
+                            value="<%= movie && movie.poster_url ? movie.poster_url : '' %>">
                         <div class="form-text">
-                            Dejar vacío para usar imagen por defecto
+                            URL externa de la imagen (solo si no subes archivo)
                         </div>
                     </div>
 
-                    <!-- Imagen actual (solo en edición) -->
-                    <% if (typeof movie !== 'undefined' && movie && movie.poster_url && movie.poster_url !== '/images/default-poster.jpg') { %>
+                    <!-- Imagen actual (solo en edición) - CORREGIDO -->
+                    <% if (typeof movie !== 'undefined' && movie && movie.poster_image && movie.poster_image !== '/images/default-poster.jpg') { %>
                         <div class="form-group">
                             <label>Imagen Actual:</label>
-                            <img src="<%= movie.poster_url %>" 
-                                 alt="<%= movie.title %>" 
-                                 class="current-image"
-                                 onerror="this.style.display='none'">
+                            <img src="<%= movie.poster_image %>" 
+                                alt="<%= movie.title %>" 
+                                class="current-image"
+                                onerror="this.style.display='none'">
                             <div class="form-text">
                                 Imagen actual de la película/serie
                             </div>
@@ -462,9 +477,9 @@
                 }
                 
                 // Validar tipo
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
                 if (!allowedTypes.includes(file.type)) {
-                    alert('Solo se permiten imágenes (JPEG, JPG, PNG, GIF).');
+                    alert('Solo se permiten imágenes (JPEG, JPG, PNG, GIF, WebP).');
                     input.value = '';
                     preview.classList.remove('show');
                     return;
@@ -491,6 +506,7 @@
                 const title = document.getElementById('title').value.trim();
                 const year = document.getElementById('year').value.trim();
                 const genre = document.getElementById('genre').value.trim();
+                const priceVal = document.getElementById('price') ? document.getElementById('price').value.trim() : '';
                 
                 if (!title || !year || !genre) {
                     e.preventDefault();
@@ -510,14 +526,24 @@
                         return false;
                     }
                     
-                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
                     if (!allowedTypes.includes(file.type)) {
                         e.preventDefault();
-                        alert('Solo se permiten imágenes (JPEG, JPG, PNG, GIF).');
+                        alert('Solo se permiten imágenes (JPEG, JPG, PNG, GIF, WebP).');
                         return false;
                     }
                 }
                 
+                // Validar precio si fue proporcionado
+                if (priceVal) {
+                    const p = Number(priceVal);
+                    if (isNaN(p) || p < 0) {
+                        e.preventDefault();
+                        alert('El precio debe ser un número válido mayor o igual a 0.');
+                        return false;
+                    }
+                }
+
                 return true;
             });
         });

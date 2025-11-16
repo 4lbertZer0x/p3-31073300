@@ -5,58 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Usuario - CineCríticas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">CineCríticas</a>
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-film"></i> CineCríticas
+            </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/admin">← Volver al Panel</a>
+                <a class="nav-link" href="/admin">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
             </div>
         </div>
     </nav>
     
     <div class="container mt-4">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                
-                <!-- Información de Debug -->
-                <div class="alert alert-info">
-                    <h5>🔍 Estado del Sistema:</h5>
-                    <p><strong>Usuario en sesión:</strong> <%= user.username %> (Rol: <%= user.role %>)</p>
-                    <p><strong>userToEdit definido:</strong> <%= typeof userToEdit !== 'undefined' ? 'SÍ' : 'NO' %></p>
-                    <% if (typeof userToEdit !== 'undefined') { %>
-                        <p><strong>Editando usuario:</strong> <%= userToEdit.username %> (ID: <%= userToEdit.id %>)</p>
-                    <% } %>
-                </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="card-title mb-0">
+                            <i class="fas fa-user-edit"></i> Editar Usuario
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Mensajes de error/éxito -->
+                        <% if (error) { %>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i> <%= error %>
+                            </div>
+                        <% } %>
+                        
+                        <% if (success) { %>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> <%= success %>
+                            </div>
+                        <% } %>
 
-                <% if (user && user.role === 'admin' && typeof userToEdit !== 'undefined') { %>
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h2 class="card-title mb-0">
-                                <i class="fas fa-user-edit"></i> Editar Usuario
-                            </h2>
-                        </div>
-                        <div class="card-body">
-                            <form action="/admin/users/<%= userToEdit.id %>/update" method="POST">
+                        <% if (user && user.role === 'admin' && userToEdit) { %>
+                            <!-- CORRECCIÓN: Usar la ruta POST /admin/users/:id/edit -->
+                            <form action="/admin/users/<%= userToEdit.id %>/edit" method="POST">
                                 <div class="mb-3">
-                                    <label for="username" class="form-label">Nombre de Usuario:</label>
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-user"></i> Nombre de Usuario:
+                                    </label>
                                     <input type="text" class="form-control" id="username" name="username" 
                                            value="<%= userToEdit.username %>" required>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="email" class="form-label">Email:</label>
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope"></i> Email:
+                                    </label>
                                     <input type="email" class="form-control" id="email" name="email" 
                                            value="<%= userToEdit.email %>" required>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="role" class="form-label">Rol:</label>
+                                    <label for="role" class="form-label">
+                                        <i class="fas fa-user-tag"></i> Rol:
+                                    </label>
                                     <select class="form-select" id="role" name="role" required>
                                         <option value="user" <%= userToEdit.role === 'user' ? 'selected' : '' %>>Usuario</option>
                                         <option value="admin" <%= userToEdit.role === 'admin' ? 'selected' : '' %>>Administrador</option>
                                     </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">
+                                        <i class="fas fa-lock"></i> Nueva Contraseña (opcional):
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Dejar vacío para mantener la actual">
+                                    <div class="form-text">Solo llena este campo si quieres cambiar la contraseña</div>
                                 </div>
                                 
                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -68,22 +107,29 @@
                                     </a>
                                 </div>
                             </form>
-                        </div>
+                            
+                        <% } else { %>
+                            <div class="alert alert-danger text-center">
+                                <h4><i class="fas fa-exclamation-triangle"></i> No se puede editar el usuario</h4>
+                                <p>No tienes permisos suficientes o el usuario no existe.</p>
+                                <a href="/admin" class="btn btn-primary mt-3">
+                                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                                </a>
+                            </div>
+                        <% } %>
                     </div>
-                    
-                <% } else { %>
-                    <div class="alert alert-danger text-center">
-                        <h4><i class="fas fa-exclamation-triangle"></i> No se puede editar</h4>
-                        <p>Problemas detectados:</p>
-                        <ul class="list-unstyled">
-                            <li>• Usuario logueado: <%= user ? 'Sí' : 'No' %></li>
-                            <li>• Es administrador: <%= user && user.role === 'admin' ? 'Sí' : 'No' %></li>
-                            <li>• userToEdit definido: <%= typeof userToEdit !== 'undefined' ? 'Sí' : 'No' %></li>
-                        </ul>
-                        <a href="/admin" class="btn btn-primary mt-3">
-                            <i class="fas fa-arrow-left"></i> Volver al Panel
-                        </a>
+                </div>
+                
+                <!-- Información de debug (solo desarrollo) -->
+                <% if (process.env.NODE_ENV !== 'production') { %>
+                <div class="card mt-3 bg-light">
+                    <div class="card-body">
+                        <h6>🔍 Información de Debug:</h6>
+                        <p><strong>Usuario en sesión:</strong> <%= user.username %> (ID: <%= user.id %>, Rol: <%= user.role %>)</p>
+                        <p><strong>Editando usuario:</strong> <%= userToEdit.username %> (ID: <%= userToEdit.id %>, Rol: <%= userToEdit.role %>)</p>
+                        <p><strong>Ruta del formulario:</strong> POST /admin/users/<%= userToEdit.id %>/edit</p>
                     </div>
+                </div>
                 <% } %>
             </div>
         </div>
@@ -91,10 +137,10 @@
 
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <div class="container">
-            <p class="mb-0">CineCríticas &copy; 2024</p>
+            <p class="mb-0">CineCríticas &copy; 2024 - Panel de Administración</p>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html>    
