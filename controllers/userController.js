@@ -73,6 +73,101 @@ class UserController {
 
   /**
    * @swagger
+   * /api/user/profile:
+   *   put:
+   *     summary: Actualizar perfil del usuario
+   *     description: Actualiza la información del perfil del usuario autenticado
+   *     tags:
+   *       - Users
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               full_name:
+   *                 type: string
+   *                 description: Nombre completo del usuario
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 description: Email del usuario
+   *               current_password:
+   *                 type: string
+   *                 description: Contraseña actual (requerida para cambiar contraseña)
+   *               new_password:
+   *                 type: string
+   *                 description: Nueva contraseña
+   *     responses:
+   *       200:
+   *         description: Perfil actualizado exitosamente
+   *       400:
+   *         description: Datos inválidos o error de validación
+   *       401:
+   *         description: No autenticado
+   *       500:
+   *         description: Error del servidor
+   */
+  static async updateProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const { full_name, email, current_password, new_password } = req.body;
+
+      console.log('🔍 DEBUG - Actualizando perfil para usuario:', userId);
+      console.log('🔍 DEBUG - Datos recibidos:', { full_name, email, hasCurrentPassword: !!current_password, hasNewPassword: !!new_password });
+
+      // Preparar datos para actualizar
+      const updateData = {};
+      
+      if (full_name !== undefined) updateData.full_name = full_name;
+      if (email !== undefined) updateData.email = email;
+
+      // Manejar cambio de contraseña si se proporciona
+      if (new_password) {
+        if (!current_password) {
+          return res.status(400).json({ 
+            success: false, 
+            message: 'La contraseña actual es requerida para cambiar la contraseña' 
+          });
+        }
+        updateData.current_password = current_password;
+        updateData.new_password = new_password;
+      }
+
+      // Validar que hay datos para actualizar
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'No se proporcionaron datos para actualizar' 
+        });
+      }
+
+      console.log('🔍 DEBUG - Llamando a DatabaseService.updateUserProfile');
+      const updatedUser = await DatabaseService.updateUserProfile(userId, updateData);
+
+      const { password_hash, ...userWithoutPassword } = updatedUser;
+
+      console.log('✅ Perfil actualizado exitosamente');
+      return res.json({ 
+        success: true, 
+        message: 'Perfil actualizado correctamente',
+        data: userWithoutPassword 
+      });
+
+    } catch (error) {
+      console.error('❌ Error en updateProfile:', error.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  }
+
+  /**
+   * @swagger
    * /api/admin/users:
    *   get:
    *     summary: Obtener todos los usuarios (Solo Admin)

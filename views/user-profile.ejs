@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .user-container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            min-height: 80vh;
+        }
+
+        .user-sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 30px 20px;
+        }
+
+        .user-sidebar h3 {
+            color: #ecf0f1;
+            margin-bottom: 30px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #34495e;
+            padding-bottom: 10px;
+        }
+
+        .user-menu {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-menu a {
+            color: #bdc3c7;
+            text-decoration: none;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .user-menu a:hover {
+            background: #34495e;
+            color: white;
+        }
+
+        .user-menu a.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .user-content {
+            flex: 1;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .user-content h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 600px;
+        }
+
+        .profile-card h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+        }
+
+        .profile-card h3 {
+            color: #34495e;
+            margin: 25px 0 15px 0;
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-primary:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #messageContainer {
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .user-info {
+            background: #e8f4fc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+            color: #2c3e50;
+        }
+
+        .user-info strong {
+            color: #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .user-container {
+                flex-direction: column;
+            }
+            
+            .user-sidebar {
+                width: 100%;
+            }
+            
+            .user-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="user-container">
+        <div class="user-sidebar">
+            <h3>Mi Cuenta</h3>
+            <nav class="user-menu">
+                <a href="/user/profile" class="active">Perfil</a>
+                <a href="/user/my-reviews">Mis Reseñas</a>
+                <a href="/user/purchase-history">Historial de Compras</a>
+                <a href="/user/membership">Membresías</a>
+                <a href="/">🏠 Inicio</a>
+            </nav>
+        </div>
+        
+        <div class="user-content">
+            <h1>Mi Perfil</h1>
+            
+            <div class="user-info">
+                <p><strong>Usuario:</strong> <%= user.username %></p>
+                <p><strong>Rol:</strong> <%= user.role === 'admin' ? 'Administrador' : 'Usuario' %></p>
+            </div>
+            
+            <div id="messageContainer" style="display: none;"></div>
+            
+            <div class="profile-card">
+                <h2>Información Personal</h2>
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label>Nombre completo:</label>
+                        <input type="text" name="full_name" value="<%= user.full_name || '' %>" placeholder="Ingresa tu nombre completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" name="email" value="<%= user.email %>" required placeholder="tu@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nombre de usuario:</label>
+                        <input type="text" value="<%= user.username %>" disabled>
+                        <small>El nombre de usuario no se puede cambiar</small>
+                    </div>
+                    
+                    <h3>Cambiar contraseña</h3>
+                    <div class="form-group">
+                        <label>Contraseña actual:</label>
+                        <input type="password" name="current_password" placeholder="Solo si quieres cambiar la contraseña">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nueva contraseña:</label>
+                        <input type="password" name="new_password" placeholder="Mínimo 6 caracteres">
+                        <small>Deja en blanco si no quieres cambiar la contraseña</small>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">💾 Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+    function showMessage(message, type = 'success') {
+        const container = document.getElementById('messageContainer');
+        container.innerHTML = `<div class="${type}">${message}</div>`;
+        container.style.display = 'block';
+        
+        setTimeout(() => { 
+            container.style.display = 'none'; 
+        }, 5000);
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '⏳ Guardando...';
+        submitBtn.disabled = true;
+        
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData);
+        
+        console.log('📤 Datos del formulario:', data);
+        
+        // Limpiar datos
+        if (data.full_name) data.full_name = data.full_name.trim();
+        if (data.email) data.email = data.email.trim();
+        if (data.current_password) data.current_password = data.current_password.trim();
+        if (data.new_password) data.new_password = data.new_password.trim();
+        
+        // Validaciones básicas
+        if (!data.email) {
+            showMessage('❌ El email es obligatorio', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        if (data.new_password && data.new_password.length < 6) {
+            showMessage('❌ La nueva contraseña debe tener al menos 6 caracteres', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        // Si no hay nueva contraseña, eliminar campos de contraseña
+        if (!data.new_password) {
+            delete data.current_password;
+            delete data.new_password;
+        }
+        
+        console.log('📤 Datos procesados para enviar:', data);
+
+        try {
+            const response = await fetch('/api/user/profile/session', {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            console.log('📥 Respuesta del servidor:', result);
+            
+            if (response.ok) {
+                showMessage('✅ ' + result.message, 'success');
+                // Forzar recarga completa después de 2 segundos
+                setTimeout(() => {
+                    console.log('🔄 Recargando página...');
+                    window.location.href = '/user/profile?success=' + encodeURIComponent(result.message);
+                }, 2000);
+            } else {
+                showMessage('❌ ' + (result.error || 'Error al actualizar perfil'), 'error');
+            }
+        } catch (error) {
+            console.error('💥 Error de conexión:', error);
+            showMessage('❌ Error de conexión con el servidor', 'error');
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Mostrar mensajes de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+    
+    if (success) {
+        showMessage('✅ ' + success, 'success');
+        // Limpiar URL después de mostrar el mensaje
+        setTimeout(() => {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 3000);
+    }
+    if (error) {
+        showMessage('❌ ' + error, 'error');
+    }
+    
+    // Debug: mostrar datos actuales del usuario
+    console.log('👤 Datos actuales del usuario:', {
+        username: '<%= user.username %>',
+        email: '<%= user.email %>',
+        full_name: '<%= user.full_name %>',
+        role: '<%= user.role %>'
+    });
+</script>
+</body>
+</html>

@@ -10,12 +10,14 @@ class AdminController {
       const users = await DatabaseService.getAllUsers();
       const reviews = await DatabaseService.getAllReviews();
       const movies = await DatabaseService.getAllMovies();
-      
+      const products = await DatabaseService.getAllProducts ? await DatabaseService.getAllProducts() : [];
+
       res.render('admin', {
         user: req.session.user,
         users: users,
         reviews: reviews,
         movies: movies,
+        products: products,
         success: req.query.success,
         error: req.query.error
       });
@@ -26,6 +28,7 @@ class AdminController {
         users: [],
         reviews: [],
         movies: [],
+        products: [],
         error: 'Error al cargar el panel de administración'
       });
     }

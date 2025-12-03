@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprar Membresía - CineCríticas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+        .membership-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .purchase-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .plan-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .plan-option {
+            border: 3px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .plan-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .plan-option.selected {
+            border-color: #4299e1;
+            background: linear-gradient(135deg, #ebf8ff 0%, #fff5f5 100%);
+        }
+        .plan-option.featured {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #fffaf0 0%, #fff5eb 100%);
+        }
+        .plan-option.featured::before {
+            content: 'MÁS POPULAR';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ffc107;
+            color: #744210;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .plan-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        .plan-price {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4299e1;
+            margin: 15px 0;
+        }
+        .plan-period {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .plan-features li {
+            padding: 8px 0;
+            color: #4a5568;
+            font-size: 0.9em;
+        }
+        .plan-features li::before {
+            content: '✓';
+            color: #48bb78;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .current-plan-badge {
+            background: #48bb78;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+        .payment-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+        .payment-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .payment-option:hover {
+            border-color: #4299e1;
+        }
+        .payment-option.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+        .payment-icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        .btn-purchase {
+            background: #48bb78;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-purchase:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+        .btn-purchase:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+        .benefits-highlight {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="membership-container">
+        <div class="purchase-card">
+            <h1 style="text-align: center; color: #2d3748; margin-bottom: 10px;">
+                <i class="fas fa-crown"></i> Comprar Membresía
+            </h1>
+            <p style="text-align: center; color: #718096; margin-bottom: 30px;">
+                Elige el plan que mejor se adapte a tus necesidades
+            </p>
+
+            <!-- Estado actual -->
+            <% if (user.membership_type && user.membership_type !== 'free') { %>
+                <div style="background: #c6f6d5; color: #22543d; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Membresía actual:</strong> 
+                    <span style="text-transform: capitalize;"><%= user.membership_type %></span>
+                    <% if (user.membership_expires) { %>
+                        - Válida hasta <%= new Date(user.membership_expires).toLocaleDateString('es-ES') %>
+                    <% } %>
+                </div>
+            <% } %>
+
+            <div class="plan-comparison">
+                <!-- Plan Premium -->
+                <div class="plan-option featured" onclick="selectPlan('premium', 4.99)">
+                    <div class="plan-name">Premium</div>
+                    <div class="plan-price">€4.99</div>
+                    <div class="plan-period">por mes</div>
+                    <ul class="plan-features">
+                        <li>Reseñas ilimitadas</li>
+                        <li>Contenido exclusivo</li>
+                        <li>Sin anuncios</li>
+                        <li>Reseñas destacadas</li>
+                        <li>Soporte prioritario</li>
+                        <li>Acceso anticipado</li>
+                    </ul>
+                    <% if (user.membership_type === 'premium') { %>
+                        <div class="current-plan-badge">Tu plan actual</div>
+                    <% } %>
+                </div>
+
+                <!-- Plan VIP -->
+                <div class="plan-option" onclick="selectPlan('vip', 9.99)">
+                    <div class="plan-name">VIP</div>
+                    <div class="plan-price">€9.99</div>
+                    <div class="plan-period">por mes</div>
+                    <ul class="plan-features">
+                        <li>Todos los beneficios Premium</li>
+                        <li>Contenido VIP exclusivo</li>
+                        <li>Invitaciones a eventos</li>
+                        <li>Asistente personal</li>
+                        <li>Descuentos especiales</li>
+                        <li>Beta tester features</li>
+                    </ul>
+                    <% if (user.membership_type === 'vip') { %>
+                        <div class="current-plan-badge">Tu plan actual</div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="benefits-highlight">
+                <h3 style="color: #2d3748; margin-bottom: 15px;">
+                    <i class="fas fa-star"></i> ¿Por qué hacerte Premium?
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>🎬 Acceso Ilimitado</strong>
+                        <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">
+                            Contenido exclusivo y reseñas premium
+                        </p>
+                    </div>
+                    <div>
+                        <strong>⭐ Mayor Visibilidad</strong>
+                        <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">
+                            Tus reseñas aparecen destacadas
+                        </p>
+                    </div>
+                    <div>
+                        <strong>📱 Sin Anuncios</strong>
+                        <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">
+                            Experiencia libre de publicidad
+                        </p>
+                    </div>
+                    <div>
+                        <strong>💬 Soporte 24/7</strong>
+                        <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">
+                            Atención personalizada prioritaria
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="membershipForm" action="/purchase/process-membership" method="POST">
+                <input type="hidden" name="plan_type" id="planType">
+                <input type="hidden" name="amount" id="planAmount">
+
+                <div class="payment-section">
+                    <h3 style="margin-bottom: 15px;">
+                        <i class="fas fa-credit-card"></i> Método de Pago
+                    </h3>
+                    
+                    <div class="payment-option" onclick="selectPayment('card')">
+                        <input type="radio" name="payment_method" value="card" id="card" style="display: none;">
+                        <label for="card" style="cursor: pointer;">
+                            <i class="fas fa-credit-card payment-icon"></i>
+                            Tarjeta de Crédito/Débito
+                        </label>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment('paypal')">
+                        <input type="radio" name="payment_method" value="paypal" id="paypal" style="display: none;">
+                        <label for="paypal" style="cursor: pointer;">
+                            <i class="fab fa-paypal payment-icon"></i>
+                            PayPal
+                        </label>
+                    </div>
+
+                    <!-- Información de suscripción -->
+                    <div style="background: #f0fff4; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <i class="fas fa-sync-alt"></i>
+                        <strong>Suscripción mensual:</strong> 
+                        <span id="subscriptionInfo">Selecciona un plan</span>
+                        <br>
+                        <small style="color: #718096;">
+                            Puedes cancelar en cualquier momento desde tu perfil
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn-purchase" id="purchaseBtn" disabled>
+                        <i class="fas fa-lock"></i> 
+                        <span id="purchaseText">Selecciona un plan</span>
+                    </button>
+                </div>
+            </form>
+
+            <div style="text-align: center; margin-top: 30px; color: #718096; font-size: 0.9em;">
+                <p>
+                    <i class="fas fa-shield-alt"></i> 
+                    Pago 100% seguro - Cifrado SSL
+                    <br>
+                    <i class="fas fa-undo"></i> 
+                    Cancelación en cualquier momento
+                </p>
+                <a href="/user/membership" style="color: #4299e1; text-decoration: none;">
+                    <i class="fas fa-arrow-left"></i> Volver a membresías
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlan = null;
+        let selectedPlanAmount = null;
+        let selectedPaymentMethod = null;
+
+        function selectPlan(planType, amount) {
+            // No permitir seleccionar el plan actual
+            if (planType === '<%= user.membership_type %>') {
+                alert('Ya tienes este plan activo.');
+                return;
+            }
+
+            selectedPlan = planType;
+            selectedPlanAmount = amount;
+            
+            // Remover selección anterior
+            document.querySelectorAll('.plan-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Agregar selección actual
+            event.currentTarget.classList.add('selected');
+            
+            // Actualizar campos ocultos
+            document.getElementById('planType').value = planType;
+            document.getElementById('planAmount').value = amount;
+            
+            // Actualizar información de suscripción
+            document.getElementById('subscriptionInfo').textContent = 
+                `€${amount.toFixed(2)}/mes - Plan ${planType.toUpperCase()}`;
+            
+            // Actualizar botón de compra
+            document.getElementById('purchaseText').textContent = 
+                `Suscribirse al Plan ${planType.toUpperCase()} - €${amount.toFixed(2)}/mes`;
+            
+            // Si ya hay método de pago seleccionado, habilitar botón
+            if (selectedPaymentMethod) {
+                document.getElementById('purchaseBtn').disabled = false;
+            }
+        }
+
+        function selectPayment(method) {
+            selectedPaymentMethod = method;
+            
+            // Remover selección anterior
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Agregar selección actual
+            event.currentTarget.classList.add('selected');
+            
+            // Marcar el radio button
+            document.querySelector(`input[value="${method}"]`).checked = true;
+            
+            // Habilitar botón si ya hay plan seleccionado
+            if (selectedPlan) {
+                document.getElementById('purchaseBtn').disabled = false;
+            }
+        }
+
+        // Manejar envío del formulario
+        document.getElementById('membershipForm').addEventListener('submit', function(e) {
+            if (!selectedPlan) {
+                e.preventDefault();
+                alert('Por favor, selecciona un plan de membresía.');
+                return;
+            }
+
+            if (!selectedPaymentMethod) {
+                e.preventDefault();
+                alert('Por favor, selecciona un método de pago.');
+                return;
+            }
+
+            // Confirmación final
+            if (!confirm(`¿Estás seguro de que quieres suscribirte al plan ${selectedPlan.toUpperCase()} por €${selectedPlanAmount.toFixed(2)}/mes?`)) {
+                e.preventDefault();
+                return;
+            }
+
+            const submitBtn = document.getElementById('purchaseBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            submitBtn.disabled = true;
+        });
+
+        // Pre-seleccionar si ya hay membresía activa
+        <% if (user.membership_type && user.membership_type !== 'free') { %>
+            document.querySelector(`.plan-option`).style.opacity = '0.7';
+            document.querySelector(`.plan-option:nth-child(2)`).style.opacity = '0.7';
+        <% } %>
+    </script>
+</body>
+</html>

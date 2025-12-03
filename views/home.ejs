@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --amazon-orange: #00ff11;
+            --amazon-dark: #131921;
+            --amazon-light: #232f3e;
+            --amazon-gray: #f3f3f3;
+            --amazon-text: #0f1111;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Amazon Ember', Arial, sans-serif;
+            background-color: var(--amazon-gray);
+            color: var(--amazon-text);
+            line-height: 1.6;
+        }
+
+        /* Header Estilo Amazon */
+        .amazon-header {
+            background: var(--amazon-dark);
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            color: var(--amazon-orange);
+            font-size: 2rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            font-family: 'Amazon Ember', Arial, sans-serif;
+        }
+
+        .logo-text span {
+            color: var(--amazon-orange);
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 800px;
+            display: flex;
+        }
+
+        .search-bar select {
+            background: #f3f3f3;
+            border: none;
+            padding: 10px;
+            border-radius: 4px 0 0 4px;
+            border-right: 1px solid #ddd;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            background: var(--amazon-orange);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            color: var(--amazon-dark);
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            color: white;
+            text-decoration: none;
+            padding: 5px;
+        }
+
+        .nav-item span:first-child {
+            font-size: 0.8rem;
+        }
+
+        .nav-item span:last-child {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .cart {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--amazon-orange);
+            color: var(--amazon-dark);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Subnav Estilo Amazon */
+        .amazon-subnav {
+            background: var(--amazon-light);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .subnav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .subnav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .subnav-links a:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* User Menu */
+        .user-menu {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: var(--amazon-orange); color: var(--amazon-dark); }
+        .btn-success { background: #007600; color: white; }
+        .btn-danger { background: #cc0c39; color: white; }
+        .btn-secondary { background: #37475a; color: white; }
+
+        .membership-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #744210;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 60px 40px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .hero-banner h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .hero-banner p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Products Grid */
+        .section-title {
+            font-size: 1.8rem;
+            margin: 30px 0 20px;
+            color: var(--amazon-text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: #f8f8f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .product-image img {
+            max-width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+        }
+
+        .product-details {
+            padding: 20px;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--amazon-text);
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .stars {
+            color: var(--amazon-orange);
+        }
+
+        .rating-count {
+            color: #007185;
+            font-size: 0.9rem;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #b12704;
+            margin-bottom: 15px;
+        }
+
+        .product-shipping {
+            color: #007600;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-add-cart {
+            flex: 1;
+            background: var(--amazon-orange);
+            color: var(--amazon-dark);
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-buy-now {
+            flex: 1;
+            background: #ffa41c;
+            color: var(--amazon-dark);
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+            background: white;
+        }
+
+        .alert-success {
+            border-color: #007600;
+            color: #007600;
+        }
+
+        .alert-error {
+            border-color: #cc0c39;
+            color: #cc0c39;
+        }
+
+        /* Footer */
+        .amazon-footer {
+            background: var(--amazon-light);
+            color: white;
+            padding: 40px 20px;
+            margin-top: 50px;
+        }
+
+        .footer-content {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .footer-section a {
+            display: block;
+            color: #ddd;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .amazon-header {
+                flex-direction: column;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
+            
+            .amazon-subnav {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Principal -->
+    <header class="amazon-header">
+        <a href="/" class="logo">
+            <i class="fas fa-bolt logo-icon"></i>
+            <span class="logo-text">Electro<span>Tienda</span></span>
+        </a>
+
+        <div class="search-bar">
+            <select>
+                <option>Todos los departamentos</option>
+                <option>Electrónicos</option>
+                <option>Computadoras</option>
+                <option>Smartphones</option>
+                <option>Audio</option>
+                <option>Videojuegos</option>
+            </select>
+            <input type="text" placeholder="Buscar productos electrónicos...">
+            <button type="submit">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+
+        <div class="header-nav">
+            <% if (user) { %>
+                <a href="/user/profile" class="nav-item">
+                    <span>Hola, <%= user.username %></span>
+                    <span>Mi cuenta</span>
+                </a>
+            <% } else { %>
+                <a href="/login" class="nav-item">
+                    <span>Hola, identifícate</span>
+                    <span>Cuenta y listas</span>
+                </a>
+            <% } %>
+            
+            <a href="/orders" class="nav-item">
+                <span>Devoluciones</span>
+                <span>Y Pedidos</span>
+            </a>
+            
+            <a href="/cart" class="nav-item cart">
+                <i class="fas fa-shopping-cart" style="font-size: 1.5rem;"></i>
+                <span>Carrito</span>
+                <div class="cart-count">0</div>
+            </a>
+        </div>
+
+        <div class="user-menu">
+            <% if (user) { %>
+                <% if (user.membership_type && user.membership_type !== 'free') { %>
+                    <span class="membership-badge">
+                        <i class="fas fa-crown"></i> <%= user.membership_type.toUpperCase() %>
+                    </span>
+                <% } %>
+                
+                <a href="/user/profile" class="btn btn-primary">
+                    <i class="fas fa-user-circle"></i> Perfil
+                </a>
+                
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin" class="btn btn-secondary">
+                        <i class="fas fa-cog"></i> Admin
+                    </a>
+                <% } %>
+                
+                <form method="POST" action="/logout" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </form>
+            <% } else { %>
+                <a href="/login" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </a>
+                <a href="/register" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </a>
+            <% } %>
+        </div>
+    </header>
+
+    <!-- Subnav -->
+    <nav class="amazon-subnav">
+        <button class="menu-btn">
+            <i class="fas fa-bars"></i> Todo
+        </button>
+        
+        <div class="subnav-links">
+            <a href="/category/electronics">Electrónicos</a>
+            <a href="/category/computers">Computadoras</a>
+            <a href="/category/smartphones">Smartphones</a>
+            <a href="/category/gaming">Videojuegos</a>
+            <a href="/category/audio">Audio</a>
+            <a href="/category/smart-home">Smart Home</a>
+            <a href="/deals">Ofertas del día</a>
+        </div>
+    </nav>
+
+    <!-- Alert Messages -->
+    <div class="container">
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <%= success %>
+            </div>
+        <% } %>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= error %>
+            </div>
+        <% } %>
+
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <h1>Descubre la Tecnología del Mañana, Hoy</h1>
+            <p>Encuentra los mejores productos electrónicos al mejor precio. Envío gratis en pedidos superiores a $50.</p>
+            <a href="/deals" class="btn btn-primary" style="font-size: 1.2rem; padding: 15px 30px;">
+                <i class="fas fa-bolt"></i> Ver Ofertas Destacadas
+            </a>
+        </div>
+
+        <!-- Products Section -->
+        <% if (products && products.length > 0) { %>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 30px 0 20px;">
+                <h2 class="section-title">
+                    <i class="fas fa-box-open"></i> Todos los Productos
+                </h2>
+                <span style="color: #666; font-size: 0.9rem;">
+                    Mostrando <%= products.length %> producto<%= products.length !== 1 ? 's' : '' %>
+                </span>
+            </div>
+            
+            <div class="products-grid">
+                <% products.forEach(function(product) { %>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <% if (product.image_url) { %>
+                                <img src="<%= product.image_url %>" alt="<%= product.title %>">
+                            <% } else { %>
+                                <i class="fas fa-<%= product.icon || 'box' %>" style="font-size: 4rem; color: #666;"></i>
+                            <% } %>
+                        </div>
+                        
+                        <div class="product-details">
+                            <div class="product-title">
+                                <%= product.title %>
+                            </div>
+                            
+                            <% if (product.description) { %>
+                                <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px; height: 40px; overflow: hidden;">
+                                    <%= product.description.length > 80 ? product.description.substring(0, 80) + '...' : product.description %>
+                                </p>
+                            <% } %>
+                            
+                            <% if (product.rating) { %>
+                                <div class="product-rating">
+                                    <div class="stars">
+                                        <% for (var i = 0; i < 5; i++) { %>
+                                            <% if (i < product.rating) { %>
+                                                ★
+                                            <% } else { %>
+                                                ☆
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                    <span class="rating-count">(<%= product.review_count || 0 %>)</span>
+                                </div>
+                            <% } %>
+                            
+                            <div class="product-price">
+                                $<%= product.price ? product.price.toFixed(2) : '0.00' %>
+                            </div>
+                            
+                            <div class="product-shipping">
+                                <% if (product.free_shipping) { %>
+                                    <i class="fas fa-shipping-fast"></i> Envío GRATIS
+                                <% } else { %>
+                                    <i class="fas fa-truck"></i> Envío disponible
+                                <% } %>
+                            </div>
+                            
+                            <div class="product-actions">
+                                <button class="btn-add-cart" onclick="addToCart(<%= product.id || 0 %>, '<%= product.title %>')">
+                                    <i class="fas fa-cart-plus"></i> Añadir al carrito
+                                </button>
+                                <a href="/product/<%= product.id || '#' %>" class="btn-buy-now" style="text-decoration: none; text-align: center;">
+                                    <i class="fas fa-info-circle"></i> Ver detalles
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h3>No hay productos disponibles</h3>
+                <p>Pronto agregaremos nuevos productos electrónicos.</p>
+                <% if (user && user.role === 'admin') { %>
+                    <a href="/admin/products/new" class="btn btn-success mt-3">
+                        <i class="fas fa-plus-circle"></i> Agregar Producto
+                    </a>
+                <% } else if (!user) { %>
+                    <a href="/register" class="btn btn-primary mt-3">
+                        <i class="fas fa-user-plus"></i> Regístrate para recibir notificaciones
+                    </a>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Footer -->
+    <footer class="amazon-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Conócenos</h3>
+                <a href="/about">Acerca de ElectroTienda</a>
+                <a href="/careers">Trabaja con nosotros</a>
+                <a href="/press">Comunicados de prensa</a>
+                <a href="/sustainability">Sostenibilidad</a>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Gana dinero con nosotros</h3>
+                <a href="/sell">Vender en ElectroTienda</a>
+                <a href="/affiliate">Programa de afiliados</a>
+                <a href="/advertise">Publica tus productos</a>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Métodos de pago</h3>
+                <a href="/payment">Tarjetas de crédito</a>
+                <a href="/payment">PayPal</a>
+                <a href="/payment">Pago en efectivo</a>
+                <a href="/payment">Meses sin intereses</a>
+            </div>
+            
+            <div class="footer-section">
+                <h3>¿Necesitas ayuda?</h3>
+                <a href="/contact">Contáctanos</a>
+                <a href="/track">Seguir mi pedido</a>
+                <a href="/returns">Devoluciones y reembolsos</a>
+                <a href="/help">Centro de ayuda</a>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #37475a;">
+            <p>&copy; 2024 ElectroTienda.com. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Simulación de carrito
+        let cartCount = 0;
+        
+        function addToCart(productId, productName) {
+            cartCount++;
+            document.querySelector('.cart-count').textContent = cartCount;
+            
+            // Mostrar notificación
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle"></i> 
+                "${productName}" añadido al carrito. Ahora tienes ${cartCount} producto${cartCount !== 1 ? 's' : ''} en el carrito.
+            `;
+            
+            document.querySelector('.container').prepend(alert);
+            
+            // Auto-ocultar notificación
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
+        }
+
+        // Ocultar mensajes automáticamente
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                if (!alert.classList.contains('persistent')) {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.5s ease';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                }
+            });
+        }, 5000);
+
+        // Buscar productos
+        document.querySelector('.search-bar button').addEventListener('click', function() {
+            const searchInput = document.querySelector('.search-bar input').value;
+            if (searchInput.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(searchInput)}`;
+            }
+        });
+
+        document.querySelector('.search-bar input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchInput = this.value;
+                if (searchInput.trim()) {
+                    window.location.href = `/search?q=${encodeURIComponent(searchInput)}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

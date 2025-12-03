@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compra Exitosa - CineCríticas</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .confirmation-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .success-icon {
+            font-size: 4em;
+            color: #48bb78;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4299e1;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .btn:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #48bb78;
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .purchase-details {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .purchase-details h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        
+        .purchase-details p {
+            margin-bottom: 8px;
+            color: #4a5568;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 480px) {
+            .confirmation-card {
+                padding: 30px 20px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-card">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>¡Compra Exitosa!</h1>
+        <p style="color: #718096; margin-bottom: 20px;">Tu compra ha sido procesada correctamente.</p>
+        
+        <% if (purchase) { %>
+            <div class="purchase-details">
+                <h3>Detalles de la compra:</h3>
+                <p><strong>Película:</strong> <%= purchase.movie_title %></p>
+                <p><strong>Total:</strong> €<%= parseFloat(purchase.amount).toFixed(2) %></p>
+                <p><strong>Método de pago:</strong> <%= purchase.payment_method %></p>
+                <p><strong>Fecha:</strong> <%= new Date(purchase.created_at).toLocaleDateString('es-ES', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) %></p>
+                <p><strong>ID de transacción:</strong> #<%= purchase.id %></p>
+                <p><strong>Estado:</strong> <span style="color: #48bb78; font-weight: bold;">Completado</span></p>
+            </div>
+        <% } else { %>
+            <div class="purchase-details">
+                <p style="text-align: center; color: #718096;">
+                    <i class="fas fa-info-circle"></i> Tu compra se ha completado exitosamente.
+                </p>
+                <% if (typeof purchase_id !== 'undefined' && purchase_id) { %>
+                    <p style="text-align: center;"><strong>ID de compra:</strong> #<%= purchase_id %></p>
+                <% } %>
+            </div>
+        <% } %>
+        
+        <div class="btn-group">
+            <a href="/" class="btn">
+                <i class="fas fa-home"></i> Volver al Inicio
+            </a>
+            <a href="/user/purchase-history" class="btn btn-success">
+                <i class="fas fa-history"></i> Ver Historial
+            </a>
+        </div>
+        
+        <div style="margin-top: 25px; color: #718096; font-size: 0.9em;">
+            <p><i class="fas fa-envelope"></i> Recibirás un correo de confirmación en breve.</p>
+            <p style="margin-top: 5px;"><i class="fas fa-shield-alt"></i> Transacción segura</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -44,17 +44,12 @@ class ReviewController {
     try {
       const movies = await DatabaseService.getAllMovies();
       
-      // ✅ CORREGIR: Mapear las películas para incluir las propiedades que la vista espera
       const moviesWithRequiredProps = movies.map(movie => ({
         id: movie.id,
         title: movie.title,
-        // Si no existe 'year', usar release_year o un valor por defecto
         year: movie.release_year || movie.year || 'N/A',
-        // Si no existe 'genre', usar un valor por defecto
         genre: movie.genre || 'Sin género',
-        // Si no existe 'type', usar un valor por defecto
         type: movie.type || 'movie',
-        // Incluir todas las otras propiedades por si acaso
         ...movie.toJSON ? movie.toJSON() : movie
       }));
       
@@ -83,12 +78,10 @@ class ReviewController {
       const userId = req.session.user.id;
       const { movie_title, title, content, rating } = req.body;
 
-      // Validaciones básicas
       if (!movie_title || !title || !content || !rating) {
         return res.redirect('/reviews/new?error=Todos los campos son obligatorios');
       }
 
-      // Buscar la película por título
       const movie = await DatabaseService.Movie.findOne({
         where: { 
           title: movie_title,
@@ -100,7 +93,6 @@ class ReviewController {
         return res.redirect('/reviews/new?error=Película no encontrada o no disponible');
       }
 
-      // Crear la reseña
       const newReview = await DatabaseService.Review.create({
         title: title,
         content: content,
@@ -108,15 +100,13 @@ class ReviewController {
         user_id: userId,
         movie_id: movie.id,
         movie_title: movie.title,
-        is_featured: false, // Los usuarios normales no pueden crear reseñas destacadas
+        is_featured: false,
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()
       });
 
       console.log(`✅ Nueva reseña creada por usuario ${userId}: "${title}"`);
-
-      // Redirigir a la reseña creada o al perfil
       res.redirect(`/review/${newReview.id}?success=Reseña publicada correctamente`);
 
     } catch (error) {
@@ -130,13 +120,11 @@ class ReviewController {
     try {
       const userId = req.session.user.id;
       
-      // Obtener reseñas del usuario sin usar asociaciones
       const reviews = await DatabaseService.Review.findAll({
         where: { user_id: userId },
         order: [['created_at', 'DESC']]
       });
 
-      // Enriquecer reseñas con información de películas
       const reviewsWithMovies = await Promise.all(
         reviews.map(async (review) => {
           let movieData = { title: 'Película no encontrada', poster_image: null };
@@ -340,35 +328,56 @@ class ReviewController {
   }
 
   // Crear reseña desde panel admin (form multipart)
-  static async createReviewAdmin(req, res) {
+ static async createReviewAdmin(req, res) {
     try {
-      const { movie_id, movie_title, poster_url, user_id, title, rating, content } = req.body;
-      const is_featured = req.body.is_featured === 'true' || req.body.is_featured === 'on' || req.body.is_featured === true;
+        const { movie_id, movie_title, poster_url, user_id, title, rating, content } = req.body;
+        const is_featured = req.body.is_featured === 'true' || req.body.is_featured === 'on' || req.body.is_featured === true;
 
-      let review_image = null;
-      if (req.file) {
-        review_image = '/uploads/reviews/' + req.file.filename;
-      }
+        console.log('📝 Creando reseña desde admin con datos:', {
+            movie_id,
+            movie_title,
+            poster_url,
+            user_id,
+            title,
+            rating,
+            is_featured
+        });
 
-      const reviewData = {
-        movie_id: movie_id || null,
-        movie_title: movie_title || null,
-        poster_url: poster_url || null,
-        user_id: user_id || null,
-        title: title || null,
-        rating: rating ? Number(rating) : 5,
-        content: content || null,
-        image_url: review_image,
-        is_featured: !!is_featured
-      };
+        let review_image = poster_url || null;
+        
+        if (req.file) {
+            review_image = '/uploads/reviews/' + req.file.filename;
+            console.log('🖼️ Imagen subida para reseña:', review_image);
+        }
 
-      await DatabaseService.createReview(reviewData);
-      return res.redirect('/admin?success=Reseña creada correctamente');
+        const reviewData = {
+            movie_id: movie_id ? parseInt(movie_id) : null,
+            movie_title: movie_title || null,
+            user_id: user_id ? parseInt(user_id) : null,
+            title: title || null,
+            rating: rating ? Number(rating) : 5,
+            content: content || null,
+            review_image: review_image,
+            is_featured: !!is_featured,
+            is_active: true
+        };
+
+        console.log('💾 Guardando reseña con datos corregidos:', reviewData);
+
+        const createdReview = await DatabaseService.createReview(reviewData);
+        
+        console.log('✅ Reseña creada exitosamente:', {
+            id: createdReview.id,
+            movie_title: createdReview.movie_title,
+            review_image: createdReview.review_image
+        });
+
+        return res.redirect('/admin?success=Reseña creada correctamente');
     } catch (error) {
-      console.error('Error creando reseña desde admin:', error);
-      return res.redirect('/admin?error=Error al crear reseña');
+        console.error('❌ Error creando reseña desde admin:', error);
+        return res.redirect('/admin/reviews/new?error=Error al crear reseña: ' + error.message);
     }
-  }
+}
 
   static async showEditReviewForm(req, res) {
     try {
@@ -396,48 +405,54 @@ class ReviewController {
   /**
    * Actualizar reseña desde admin
    */
-  static async updateReviewAdmin(req, res) {
+ static async updateReviewAdmin(req, res) {
     try {
-      const reviewId = req.params.id;
-      const { movie_id, movie_title, user_id, title, rating, content } = req.body;
-      const is_featured = req.body.is_featured === 'true' || req.body.is_featured === 'on';
+        const reviewId = req.params.id;
+        const { movie_id, movie_title, user_id, title, rating, content, poster_url } = req.body;
+        const is_featured = req.body.is_featured === 'true' || req.body.is_featured === 'on';
 
-      // Obtener la reseña actual para preservar la imagen si no se sube nueva
-      const currentReview = await DatabaseService.getReviewById(reviewId);
-      
-      let image_url = currentReview.image_url; // Mantener la imagen actual por defecto
-      
-      // Solo actualizar la imagen si se subió una nueva
-      if (req.file) {
-        image_url = '/uploads/reviews/' + req.file.filename;
+        console.log(`📝 Actualizando reseña ${reviewId}:`, {
+            movie_id, movie_title, user_id, title, rating
+        });
+
+        const currentReview = await DatabaseService.getReviewById(reviewId);
         
-        // Opcional: eliminar la imagen anterior si existe
-        if (currentReview.image_url && !currentReview.image_url.includes('default')) {
-          const oldImagePath = path.join(__dirname, '..', 'public', currentReview.image_url);
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
+        let review_image = poster_url || currentReview.review_image;
+        
+        if (req.file) {
+            review_image = '/uploads/reviews/' + req.file.filename;
+            console.log('🖼️ Nueva imagen para reseña:', review_image);
+            
+            if (currentReview.review_image && !currentReview.review_image.includes('default')) {
+                const oldImagePath = path.join(__dirname, '..', 'public', currentReview.review_image);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
         }
-      }
 
-      const reviewData = {
-        movie_id: movie_id || null,
-        movie_title: movie_title || null,
-        user_id: user_id || null,
-        title: title || null,
-        rating: rating ? Number(rating) : 5,
-        content: content || null,
-        image_url: image_url,
-        is_featured: !!is_featured
-      };
+        const reviewData = {
+            movie_id: movie_id ? parseInt(movie_id) : null,
+            movie_title: movie_title || null,
+            user_id: user_id ? parseInt(user_id) : null,
+            title: title || null,
+            rating: rating ? Number(rating) : 5,
+            content: content || null,
+            review_image: review_image,
+            is_featured: !!is_featured
+        };
 
-      await DatabaseService.updateReview(reviewId, reviewData);
-      return res.redirect('/admin?success=Reseña actualizada correctamente');
+        console.log('💾 Actualizando reseña con datos:', reviewData);
+
+        await DatabaseService.updateReview(reviewId, reviewData);
+        
+        console.log(`✅ Reseña ${reviewId} actualizada correctamente`);
+        return res.redirect('/admin?success=Reseña actualizada correctamente');
     } catch (error) {
-      console.error('Error actualizando reseña desde admin:', error);
-      return res.redirect('/admin?error=Error al actualizar reseña: ' + error.message);
+        console.error('❌ Error actualizando reseña desde admin:', error);
+        return res.redirect(`/admin/reviews/${req.params.id}/edit?error=Error al actualizar reseña: ${error.message}`);
     }
-  }
+}
 
   // Compatibility alias: updateReview
   static async updateReview(req, res) {
@@ -504,68 +519,149 @@ class ReviewController {
    *       500:
    *         description: Error del servidor
    */
-  static async showReview(req, res) {
-    try {
-      const review = await DatabaseService.getReviewById(req.params.id);
-      if (!review) {
-        return res.status(404).render('404', {
-          title: 'Reseña No Encontrada',
-          user: req.session.user
-        });
-      }
-
-      // ✅ CORREGIDO: Obtener la película asociada para mostrar la imagen
-      let movie = null;
-      let product = null;
-      
-      if (review.movie_id) {
-        try {
-          // Obtener la película completa
-          movie = await DatabaseService.Movie.findByPk(review.movie_id);
-          
-          // Intentar obtener el producto asociado si existe
-          if (movie) {
-            try {
-              product = await DatabaseService.Product.findOne({
-                where: { movie_id: review.movie_id }
-              });
-            } catch (productError) {
-              console.warn('No se pudo cargar producto para la película:', productError.message);
-              product = null;
-            }
-          }
-        } catch (movieError) {
-          console.error('Error cargando película para la reseña:', movieError);
-          movie = null;
+static async showReview(req, res) {
+  try {
+    console.log('🔍 Buscando reseña ID:', req.params.id);
+    
+    // Obtener reseña con información del usuario usando el alias correcto 'user'
+    const review = await DatabaseService.Review.findOne({
+      where: { id: req.params.id },
+      include: [
+        {
+          model: DatabaseService.User,
+          as: 'user', // Usar el alias correcto 'user' en minúsculas
+          attributes: ['id', 'username', 'role', 'email']
         }
-      }
+      ]
+    });
 
-      console.log('🔍 DEBUG showReview:', {
-        reviewId: review.id,
-        movieId: review.movie_id,
-        movieTitle: review.movie_title,
-        hasMovie: !!movie,
-        moviePoster: movie ? movie.poster_image : 'No movie object',
-        hasProduct: !!product
-      });
-
-      // ✅ CORREGIDO: Pasar la película y el producto a la vista
-      res.render('review-template', {
-        title: `${review.movie_title} - CineCríticas`,
-        review: review,
-        movie: movie, // ← ¡IMPORTANTE! Pasar el objeto movie completo
-        product: product, // ← Pasar el producto si existe
-        user: req.session.user
-      });
-    } catch (error) {
-      console.error('Error cargando reseña:', error);
-      res.status(500).render('error', {
-        title: 'Error',
-        message: 'Error al cargar la reseña.',
+    if (!review) {
+      return res.status(404).render('404', {
+        title: 'Reseña No Encontrada',
         user: req.session.user
       });
     }
+
+    // Asegurar que los datos del usuario estén disponibles
+    const reviewData = review.toJSON();
+    
+    if (review.user) {
+      reviewData.username = review.user.username;
+      reviewData.user_role = review.user.role;
+    } else {
+      // Si no hay datos del usuario, intentar obtenerlos por separado
+      try {
+        const user = await DatabaseService.User.findByPk(reviewData.user_id);
+        if (user) {
+          reviewData.username = user.username;
+          reviewData.user_role = user.role;
+        } else {
+          reviewData.username = 'Usuario desconocido';
+          reviewData.user_role = 'user';
+        }
+      } catch (userError) {
+        console.warn('No se pudieron cargar datos del usuario:', userError.message);
+        reviewData.username = 'Usuario desconocido';
+        reviewData.user_role = 'user';
+      }
+    }
+
+    console.log('👤 Datos del autor:', {
+      username: reviewData.username,
+      user_role: reviewData.user_role,
+      user_id: reviewData.user_id,
+      hasUserAssociation: !!review.user
+    });
+
+    console.log('🎬 Reseña encontrada:', {
+      id: reviewData.id,
+      movie_title: reviewData.movie_title,
+      movie_id: reviewData.movie_id
+    });
+
+    // Obtener la película asociada
+    let movie = null;
+    let product = null;
+    
+    if (reviewData.movie_id) {
+      try {
+        movie = await DatabaseService.Movie.findByPk(reviewData.movie_id);
+        
+        if (movie) {
+          try {
+            product = await DatabaseService.Product.findOne({
+              where: { movie_id: reviewData.movie_id }
+            });
+          } catch (productError) {
+            console.warn('No se pudo cargar producto para la película:', productError.message);
+            product = null;
+          }
+        }
+      } catch (movieError) {
+        console.error('Error cargando película para la reseña:', movieError);
+        movie = null;
+      }
+    }
+
+    // Lógica de imágenes
+    console.log('\n🔍 DEBUG DE IMÁGENES:');
+    console.log('📸 Reseña - poster_image:', reviewData.poster_image);
+    console.log('📸 Reseña - review_image:', reviewData.review_image);
+    console.log('🎬 Película - poster_image:', movie?.poster_image);
+    
+    let imageUrl = '/images/default-poster.jpg';
+    let imageSource = 'default';
+    
+    if (reviewData.review_image && reviewData.review_image !== '') {
+      if (reviewData.review_image.startsWith('/uploads/')) {
+        imageUrl = reviewData.review_image;
+      } else {
+        imageUrl = `/uploads/reviews/${reviewData.review_image}`;
+      }
+      imageSource = 'review_image';
+      console.log('✅ Usando imagen de reseña:', imageUrl);
+    } else if (movie?.poster_image) {
+      if (movie.poster_image.startsWith('/uploads/')) {
+        imageUrl = movie.poster_image;
+      } else {
+        imageUrl = `/uploads/movies/${movie.poster_image}`;
+      }
+      imageSource = 'movie_poster';
+      console.log('✅ Usando poster de película:', imageUrl);
+    } else if (reviewData.poster_image && reviewData.poster_image !== '') {
+      if (reviewData.poster_image.startsWith('/uploads/')) {
+        imageUrl = reviewData.poster_image;
+      } else {
+        imageUrl = `/uploads/reviews/${reviewData.poster_image}`;
+      }
+      imageSource = 'review_poster';
+      console.log('✅ Usando poster de reseña:', imageUrl);
+    } else {
+      console.log('⚠️ Usando imagen por defecto');
+    }
+
+    console.log('🖼️ URL final de imagen:', imageUrl);
+    console.log('📁 Fuente de imagen:', imageSource);
+
+    // Pasar todo a la vista
+    res.render('review-template', {
+      title: `${reviewData.movie_title} - CineCríticas`,
+      review: reviewData,
+      movie: movie,
+      product: product,
+      imageUrl: imageUrl,
+      imageSource: imageSource,
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Error cargando reseña:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Error al cargar la reseña.',
+      user: req.session.user
+    });
   }
+}
 }
 
 module.exports = ReviewController;

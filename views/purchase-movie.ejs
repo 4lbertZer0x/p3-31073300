@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            color: #2d3748;
+        }
+        
+        .purchase-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .purchase-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .movie-header {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 30px;
+            align-items: flex-start;
+        }
+        
+        @media (max-width: 768px) {
+            .movie-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        .movie-poster {
+            width: 200px;
+            height: 300px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .movie-info {
+            flex: 1;
+        }
+        
+        .movie-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .movie-details {
+            color: #718096;
+            margin-bottom: 15px;
+        }
+        
+        .movie-details div {
+            margin-bottom: 5px;
+        }
+        
+        .price-tag {
+            background: #48bb78;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .payment-methods {
+            margin: 30px 0;
+        }
+        
+        .payment-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-option:hover {
+            border-color: #4299e1;
+        }
+        
+        .payment-option.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+        
+        .payment-icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+            color: #4299e1;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #4299e1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        
+        .btn-purchase {
+            background: #48bb78;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-purchase:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-purchase:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .security-badges {
+            text-align: center;
+            margin-top: 20px;
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        .security-badges p {
+            margin-bottom: 10px;
+        }
+        
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #feb2b2;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 480px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .purchase-card {
+                padding: 20px;
+            }
+            
+            .movie-poster {
+                width: 150px;
+                height: 225px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="purchase-container">
+        <div class="purchase-card">
+            <h1 style="text-align: center; color: #2d3748; margin-bottom: 30px;">
+                <i class="fas fa-shopping-cart"></i> Confirmar Compra
+            </h1>
+
+            <!-- Mensaje de error si existe -->
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> <%= error %>
+                </div>
+            <% } %>
+
+            <div class="movie-header">
+                <img src="<%= movie.poster_image ? movie.poster_image : '/images/default-poster.jpg' %>" 
+                     alt="<%= movie.title %>" 
+                     class="movie-poster"
+                     onerror="this.src='/images/default-poster.jpg'">
+                <div class="movie-info">
+                    <div class="movie-title"><%= movie.title %></div>
+                    <div class="movie-details">
+                        <div><strong>Año:</strong> <%= movie.release_year || 'N/A' %></div>
+                        <div><strong>Género:</strong> <%= movie.genre || 'No especificado' %></div>
+                        <div><strong>Duración:</strong> <%= movie.duration || 'N/A' %> min</div>
+                        <div><strong>Director:</strong> <%= movie.director || 'No especificado' %></div>
+                    </div>
+                    <div class="price-tag">
+                        €<%= movie.price ? parseFloat(movie.price).toFixed(2) : '3.99' %>
+                    </div>
+                </div>
+            </div>
+
+            <form id="purchaseForm" action="/purchase/process-movie" method="POST">
+                <input type="hidden" name="movie_id" value="<%= movie.id %>">
+                <input type="hidden" name="movie_title" value="<%= movie.title %>">
+                <input type="hidden" name="amount" value="<%= movie.price ? parseFloat(movie.price).toFixed(2) : '3.99' %>">
+                
+                <% if (typeof csrfToken !== 'undefined' && csrfToken) { %>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <% } %>
+
+                <div class="payment-methods">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">
+                        <i class="fas fa-credit-card"></i> Método de Pago
+                    </h3>
+                    
+                    <div class="payment-option" onclick="selectPayment(this, 'card')">
+                        <input type="radio" name="payment_method" value="card" id="card" style="display: none;">
+                        <label for="card" style="cursor: pointer; display: flex; align-items: center;">
+                            <i class="fas fa-credit-card payment-icon"></i>
+                            Tarjeta de Crédito/Débito
+                        </label>
+                    </div>
+
+                    <div class="payment-option" onclick="selectPayment(this, 'paypal')">
+                        <input type="radio" name="payment_method" value="paypal" id="paypal" style="display: none;">
+                        <label for="paypal" style="cursor: pointer; display: flex; align-items: center;">
+                            <i class="fab fa-paypal payment-icon"></i>
+                            PayPal
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Formulario de tarjeta -->
+                <div id="cardForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="card_number">Número de Tarjeta</label>
+                        <input type="text" id="card_number" name="card_number" class="form-control" 
+                               placeholder="1234 5678 9012 3456" maxlength="19"
+                               oninput="formatCardNumber(this)">
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="expiry_date">Fecha de Expiración</label>
+                            <input type="text" id="expiry_date" name="expiry_date" class="form-control" 
+                                   placeholder="MM/AA" maxlength="5"
+                                   oninput="formatExpiryDate(this)">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cvv">CVV</label>
+                            <input type="text" id="cvv" name="cvv" class="form-control" 
+                                   placeholder="123" maxlength="3"
+                                   oninput="formatCVV(this)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card_holder">Nombre del Titular</label>
+                        <input type="text" id="card_holder" name="card_holder" class="form-control" 
+                               placeholder="Como aparece en la tarjeta">
+                    </div>
+                </div>
+
+                <!-- Información de PayPal -->
+                <div id="paypalForm" style="display: none; text-align: center; padding: 20px;">
+                    <p style="margin-bottom: 15px; color: #4a5568;">
+                        Serás redirigido a PayPal para completar tu pago de forma segura.
+                    </p>
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                        <i class="fab fa-paypal" style="font-size: 2.5em; color: #003087; margin-bottom: 10px;"></i>
+                        <p style="margin: 10px 0 0 0; color: #718096; font-weight: 500;">
+                            Pago seguro mediante PayPal
+                        </p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-purchase" id="purchaseBtn" disabled>
+                    <i class="fas fa-lock"></i> Comprar por €<%= movie.price ? parseFloat(movie.price).toFixed(2) : '3.99' %>
+                </button>
+            </form>
+
+            <div class="security-badges">
+                <p>
+                    <i class="fas fa-shield-alt" style="color: #48bb78;"></i> 
+                    Transacción 100% segura - Cifrado SSL
+                </p>
+                <p>
+                    <i class="fas fa-undo" style="color: #4299e1;"></i> 
+                    Garantía de reembolso de 7 días
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/movie/<%= movie.id %>" 
+                   style="color: #4299e1; text-decoration: none; font-weight: 500;">
+                    <i class="fas fa-arrow-left"></i> Volver a la película
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPaymentMethod = null;
+
+        function selectPayment(element, method) {
+            selectedPaymentMethod = method;
+            
+            // Remover selección anterior
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Agregar selección actual
+            element.classList.add('selected');
+            
+            // Marcar el radio button
+            document.querySelector(`input[value="${method}"]`).checked = true;
+            
+            // Mostrar formulario correspondiente
+            if (method === 'card') {
+                document.getElementById('cardForm').style.display = 'block';
+                document.getElementById('paypalForm').style.display = 'none';
+            } else if (method === 'paypal') {
+                document.getElementById('cardForm').style.display = 'none';
+                document.getElementById('paypalForm').style.display = 'block';
+            }
+            
+            // Habilitar botón de compra
+            document.getElementById('purchaseBtn').disabled = false;
+        }
+
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ');
+            input.value = formattedValue || value;
+        }
+
+        function formatExpiryDate(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            input.value = value;
+        }
+
+        function formatCVV(input) {
+            input.value = input.value.replace(/\D/g, '').substring(0, 3);
+        }
+
+        // Manejar envío del formulario con validación
+        document.getElementById('purchaseForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('purchaseBtn');
+            
+            if (!selectedPaymentMethod) {
+                e.preventDefault();
+                showError('Por favor selecciona un método de pago');
+                return;
+            }
+
+            if (selectedPaymentMethod === 'card') {
+                const cardNumber = document.getElementById('card_number').value;
+                const expiryDate = document.getElementById('expiry_date').value;
+                const cvv = document.getElementById('cvv').value;
+                const cardHolder = document.getElementById('card_holder').value;
+                
+                if (!cardNumber || !expiryDate || !cvv || !cardHolder) {
+                    e.preventDefault();
+                    showError('Por favor completa todos los campos de la tarjeta');
+                    return;
+                }
+                
+                // Validación básica de tarjeta (16 dígitos)
+                const cleanCardNumber = cardNumber.replace(/\s/g, '');
+                if (cleanCardNumber.length !== 16) {
+                    e.preventDefault();
+                    showError('El número de tarjeta debe tener 16 dígitos');
+                    return;
+                }
+                
+                // Validación de fecha (MM/AA)
+                if (!expiryDate.match(/^\d{2}\/\d{2}$/)) {
+                    e.preventDefault();
+                    showError('Formato de fecha inválido. Usa MM/AA');
+                    return;
+                }
+                
+                // Validación de CVV (3 dígitos)
+                if (cvv.length !== 3) {
+                    e.preventDefault();
+                    showError('El CVV debe tener 3 dígitos');
+                    return;
+                }
+            }
+
+            // Si pasa todas las validaciones
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando pago...';
+            submitBtn.disabled = true;
+        });
+
+        function showError(message) {
+            // Remover mensajes de error anteriores
+            const existingError = document.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Crear nuevo mensaje de error
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            // Insertar antes del botón de compra
+            const purchaseBtn = document.getElementById('purchaseBtn');
+            purchaseBtn.parentNode.insertBefore(errorDiv, purchaseBtn);
+            
+            // Scroll al mensaje de error
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Prevenir envío con Enter en campos individuales
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

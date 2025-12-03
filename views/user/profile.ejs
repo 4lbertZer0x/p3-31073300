@@ -11,31 +11,17 @@
         <div class="user-sidebar">
             <h3>Mi Cuenta</h3>
             <nav class="user-menu">
-                <a href="/user/profile" class="<%= currentPath === '/user/profile' ? 'active' : '' %>">Perfil</a>
-                <a href="/user/my-reviews" class="<%= currentPath === '/user/my-reviews' ? 'active' : '' %>">Mis Reseñas</a>
-                <a href="/user/purchase-history" class="<%= currentPath === '/user/purchase-history' ? 'active' : '' %>">Historial de Compras</a>
-                <a href="/user/membership" class="<%= currentPath === '/user/membership' ? 'active' : '' %>">Membresías</a>
-                <div class="profile-actions">
-    <h2>Acciones Rápidas</h2>
-    <div class="action-links">
-        <a href="/reviews/new" class="action-link">
-            <span class="action-icon">✍️</span>
-            Escribir Nueva Reseña
-        </a> 
-        <br>
-        <br>
-        <a href="/user/my-reviews" class="action-link">
-            <span class="action-icon">📝</span>
-            Ver todas mis reseñas
-        </a>
-        <!-- ... otros enlaces ... -->
-    </div>
-</div>
+                <a href="/user/profile" class="active">Perfil</a>
+                <a href="/user/my-reviews">Mis Reseñas</a>
+                <a href="/user/purchase-history">Historial de Compras</a>
+                <a href="/user/membership">Membresías</a>
             </nav>
         </div>
         
         <div class="user-content">
             <h1>Mi Perfil</h1>
+            
+            <div id="messageContainer" style="display: none;"></div>
             
             <div class="profile-card">
                 <h2>Información Personal</h2>
@@ -59,30 +45,16 @@
                     <h3>Cambiar contraseña</h3>
                     <div class="form-group">
                         <label>Contraseña actual:</label>
-                        <input type="password" name="current_password">
+                        <input type="password" name="current_password" placeholder="Solo si quieres cambiar la contraseña">
                     </div>
                     
                     <div class="form-group">
                         <label>Nueva contraseña:</label>
-                        <input type="password" name="new_password">
+                        <input type="password" name="new_password" placeholder="Solo si quieres cambiar la contraseña">
                     </div>
                     
                     <button type="submit" class="btn-primary">Guardar cambios</button>
                 </form>
-            </div>
-            
-            <div class="stats-card">
-                <h2>Estadísticas</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-number"><%= reviews.length %></span>
-                        <span class="stat-label">Reseñas escritas</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number"><%= user.membership_type || 'free' %></span>
-                        <span class="stat-label">Membresía actual</span>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -90,29 +62,58 @@
     <script>
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
             
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '⏳ Guardando...';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Limpiar campos vacíos
+            if (!data.current_password) delete data.current_password;
+            if (!data.new_password) delete data.new_password;
+
             try {
-                const response = await fetch('/api/user/profile', {
+                // ✅ PRIMERO intentar con ruta alternativa
+                let response = await fetch('/api/user/profile/session', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(Object.fromEntries(formData))
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
                 });
+                
+                // ✅ SI no existe, intentar con ruta normal
+                if (response.status === 404) {
+                    response = await fetch('/api/user/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                }
                 
                 const result = await response.json();
                 
-                if (result.success) {
-                    alert('Perfil actualizado correctamente');
-                    location.reload();
+                if (response.ok) {
+                    showMessage('✅ Perfil actualizado correctamente', 'success');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert('Error: ' + result.error);
+                    showMessage(`❌ Error: ${result.error}`, 'error');
                 }
             } catch (error) {
-                alert('Error al actualizar el perfil');
+                showMessage('❌ Error de conexión', 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         });
+
+        function showMessage(message, type = 'success') {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="${type === 'success' ? 'success' : 'error'}">${message}</div>`;
+            container.style.display = 'block';
+            setTimeout(() => { container.style.display = 'none'; }, 5000);
+        }
     </script>
 </body>
 </html>

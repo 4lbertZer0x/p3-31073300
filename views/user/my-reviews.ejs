@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Reseñas - CineCríticas</title>
+    <link rel="stylesheet" href="/css/user-profile.css">
+    <style>
+        .reviews-container {
+            padding: 20px;
+        }
+        .review-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #4299e1;
+        }
+        .review-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        .review-movie {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .review-rating {
+            background: #ffc107;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .review-content {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        .review-date {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .review-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-edit {
+            background: #4299e1;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .btn-delete {
+            background: #e53e3e;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #cbd5e0;
+        }
+        .featured-badge {
+            background: #ffc107;
+            color: #744210;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #48bb78;
+        }
+        .alert-danger {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #e53e3e;
+        }
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary {
+            background: #718096;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-container">
+        <div class="user-sidebar">
+            <h3>Mi Cuenta</h3>
+            <nav class="user-menu">
+                <a href="/user/profile" class="<%= currentPath === '/user/profile' ? 'active' : '' %>">Perfil</a>
+                <a href="/user/my-reviews" class="<%= currentPath === '/user/my-reviews' ? 'active' : '' %>">Mis Reseñas</a>
+                <a href="/user/purchase-history" class="<%= currentPath === '/user/purchase-history' ? 'active' : '' %>">Historial de Compras</a>
+                <a href="/user/membership" class="<%= currentPath === '/user/membership' ? 'active' : '' %>">Membresías</a>
+                <div class="profile-actions">
+                    <h2>Acciones Rápidas</h2>
+                    <div class="action-links">
+                        <a href="/reviews/new" class="action-link">
+                            <span class="action-icon">✍️</span>
+                            Escribir Nueva Reseña
+                        </a>
+                        <br>
+                        <br>
+                        <a href="/user/my-reviews" class="action-link">
+                            <span class="action-icon">📝</span>
+                            Ver todas mis reseñas
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        
+        <div class="user-content">
+            <div class="reviews-container">
+                <h1>Mis Reseñas</h1>
+                
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> <%= success %>
+                    </div>
+                <% } %>
+                
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> <%= error %>
+                    </div>
+                <% } %>
+
+                <% if (reviews && reviews.length > 0) { %>
+                    <div class="reviews-stats">
+                        <p>Has escrito <strong><%= reviews.length %></strong> reseñas en total.</p>
+                    </div>
+
+                    <div class="reviews-list">
+                        <% reviews.forEach(function(review) { %>
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div>
+                                        <div class="review-movie">
+                                            <%= review.movie_title %>
+                                            <% if (review.is_featured) { %>
+                                                <span class="featured-badge">
+                                                    <i class="fas fa-star"></i> DESTACADA
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                        <div class="review-title" style="font-size: 1.1em; color: #4a5568; margin: 5px 0;">
+                                            "<%= review.title %>"
+                                        </div>
+                                    </div>
+                                    <div class="review-rating">
+                                        <%= review.rating %>/5 ★
+                                    </div>
+                                </div>
+                                
+                                <div class="review-content">
+                                    <% 
+                                    let content = review.content || '';
+                                    let preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
+                                    %>
+                                    <%= preview %>
+                                </div>
+                                
+                                <div class="review-date">
+                                    <i class="fas fa-calendar"></i>
+                                    Escrita el <%= new Date(review.created_at).toLocaleDateString('es-ES', { 
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    }) %>
+                                    <% if (review.updated_at && review.updated_at !== review.created_at) { %>
+                                        • <i class="fas fa-edit"></i>
+                                        Editada el <%= new Date(review.updated_at).toLocaleDateString('es-ES', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    <% } %>
+                                </div>
+
+                                <div class="review-actions">
+                                    <a href="/review/<%= review.id %>" class="btn-edit">
+                                        <i class="fas fa-eye"></i> Ver Completa
+                                    </a>
+                                    <% if (user.role === 'admin' || user.id === review.user_id) { %>
+                                        <a href="/admin/reviews/<%= review.id %>/edit" class="btn-edit">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <form action="/admin/reviews/<%= review.id %>/delete" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn-delete" onclick="return confirm('¿Estás seguro de que quieres eliminar esta reseña?')">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="fas fa-comment-slash"></i>
+                        <h3>No has escrito ninguna reseña todavía</h3>
+                        <p>Comparte tu opinión sobre tus películas y series favoritas.</p>
+                        <a href="/reviews/new" class="btn-primary" style="margin-top: 20px;">
+                            <i class="fas fa-plus"></i> Escribir Mi Primera Reseña
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

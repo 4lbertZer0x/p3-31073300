@@ -1,5 +1,4 @@
 const DatabaseService = require('../services/DatabaseService');
-const AuthService = require('../services/AuthService'); // ← AGREGAR ESTA IMPORTACIÓN
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -24,7 +23,8 @@ class AuthController {
     if (req.session.user) return res.redirect('/');
     res.render('login', {
       title: 'Iniciar Sesión - CineCríticas',
-      error: null,
+      error: req.query.error || null,
+      success: req.query.success || null,
       user: null,
     });
   }
@@ -74,8 +74,8 @@ class AuthController {
     try {
       const { username, password } = req.body;
       
-      if (!username || !password) {
-        return AuthController.renderLoginError(res, 'Usuario y contraseña son requeridos');
+        if (!username || !password) {
+          return AuthController.renderLoginError(res, 'Usuario y contraseña son requeridos');
       }
       
       console.log(`🔐 Intentando login: ${username}`);
@@ -84,8 +84,7 @@ class AuthController {
       
       if (user) {
         console.log(`✅ Usuario encontrado: ${user.username}`);
-        // ✅ CORREGIDO: Usar AuthService en lugar de user.verifyPassword
-        const isValidPassword = await AuthService.verifyPassword(password, user.password_hash);
+        const isValidPassword = await user.verifyPassword(password);
         
         if (isValidPassword) {
           return AuthController.handleSuccessfulLogin(req, res, user);
@@ -96,7 +95,7 @@ class AuthController {
         console.log('❌ Usuario no encontrado');
       }
       
-      AuthController.renderLoginError(res, 'Usuario o contraseña incorrectos');
+  AuthController.renderLoginError(res, 'Usuario o contraseña incorrectos');
       
     } catch (error) {
       console.error('Error en login:', error);
@@ -191,8 +190,7 @@ class AuthController {
       const userCount = await DatabaseService.getUserCount();
       const role = userCount === 0 ? 'admin' : 'user';
       
-      // ✅ CORREGIDO: Usar AuthService para hashear la contraseña
-      const hashedPassword = await AuthService.hashPassword(password);
+      const hashedPassword = await bcrypt.hash(password, 10);
       
       const newUser = await DatabaseService.createUser({
         username,
@@ -256,34 +254,34 @@ class AuthController {
   }
 
   /**
-   * @swagger
-   * /auth/logout:
-   *   post:
-   *     summary: Cerrar sesión
-   *     description: Cierra la sesión del usuario actual
-   *     tags:
-   *       - Authentication
-   *     responses:
-   *       200:
-   *         description: Logout exitoso
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 success:
-   *                   type: boolean
-   *                   example: true
-   *                 message:
-   *                   type: string
-   *                   example: Logout exitoso
-   */
-  static async logoutAPI(req, res) {
-    req.session.destroy(() => {
-      res.clearCookie('token');
-      res.json({ success: true, message: 'Logout exitoso' });
-    });
-  }
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Cerrar sesión
+ *     description: Cierra la sesión del usuario actual
+ *     tags:
+ *       - Authentication
+ *     responses:
+ *       200:
+ *         description: Logout exitoso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Logout exitoso
+ */
+static async logoutAPI(req, res) {
+  req.session.destroy(() => {
+    res.clearCookie('token');
+    res.json({ success: true, message: 'Logout exitoso' });
+  });
+}
 
   // Helpers
   static renderLoginError(res, message, username = '') {
@@ -324,22 +322,13 @@ class AuthController {
       role: user.role
     };
 
-    // ✅ CORREGIDO: Usar AuthService para generar el token
-    const token = AuthService.generateToken(user);
+    // Create JWT for API usage
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('token', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     // If request expects JSON, return token
     if (req.headers.accept && req.headers.accept.includes('application/json')) {
-      return res.json({ 
-        success: true, 
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role
-        }
-      });
+      return res.json({ success: true, token });
     }
 
     // Redirect to intended page
@@ -359,6 +348,8 @@ class AuthController {
       user: req.session.user || null
     });
   }
+
+  // ... (el resto de los métodos se mantiene igual)
 }
 
 module.exports = AuthController;

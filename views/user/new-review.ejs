@@ -22,7 +22,7 @@
             border-radius: 15px 15px 0 0 !important;
             font-weight: bold;
         }
-        .movie-option {
+        .product-option {
             border: 2px solid #e2e8f0;
             border-radius: 10px;
             padding: 15px;
@@ -30,32 +30,32 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .movie-option:hover {
+        .product-option:hover {
             border-color: #4299e1;
             background-color: #f7fafc;
         }
-        .movie-option.selected {
+        .product-option.selected {
             border-color: #4299e1;
             background-color: #ebf8ff;
         }
-        .movie-title {
+        .product-title {
             font-weight: bold;
             color: #2d3748;
             margin-bottom: 5px;
         }
-        .movie-year {
+        .product-year {
             color: #718096;
             font-size: 0.9rem;
         }
-        .movie-type {
+        .product-type {
             font-size: 0.8rem;
             padding: 2px 8px;
             border-radius: 12px;
             background: #e2e8f0;
             color: #4a5568;
         }
-        .movie-type.movie { background: #bee3f8; color: #2b6cb0; }
-        .movie-type.series { background: #fbb6ce; color: #97266d; }
+        .product-type.product { background: #bee3f8; color: #2b6cb0; }
+        .product-type.category { background: #fbb6ce; color: #97266d; }
         .star {
             font-size: 2rem;
             cursor: pointer;
@@ -69,7 +69,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">CineCríticas</a>
+            <a class="navbar-brand" href="/">ElectroTienda</a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/user/profile">← Volver a Mi Perfil</a>
             </div>
@@ -103,31 +103,31 @@
                             <!-- Selección de película -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
-                                    <i class="fas fa-film"></i> Selecciona una Película/Serie:
+                                    <i class="fas fa-bolt"></i> Selecciona un Producto Electrónico:
                                 </label>
                                 
                                 <% if (movies && movies.length > 0) { %>
                                     <div class="mb-3">
-                                        <input type="text" id="movieSearch" class="form-control" 
-                                               placeholder="Buscar película o serie..." 
-                                               onkeyup="filterMovies()">
+                                        <input type="text" id="productSearch" class="form-control" 
+                                               placeholder="Buscar producto electrónico..." 
+                                               onkeyup="filterProducts()">
                                     </div>
                                     
-                                    <div id="moviesList" class="mb-3" style="max-height: 400px; overflow-y: auto;">
+                                    <div id="productsList" class="mb-3" style="max-height: 400px; overflow-y: auto;">
                                         <% movies.forEach(function(movie) { %>
-                                            <div class="movie-option" 
-                                                 onclick="selectMovie('<%= movie.title %>', '<%= movie.year %>', '<%= movie.type %>', '<%= movie.genre %>')"
+                                            <div class="product-option" 
+                                                 onclick="selectProduct('<%= movie.title %>', '<%= movie.year %>', '<%= movie.type %>', '<%= movie.genre || "" %>')"
                                                  data-title="<%= movie.title.toLowerCase() %>"
                                                  data-year="<%= movie.year %>"
-                                                 data-genre="<%= movie.genre.toLowerCase() %>">
+                                                 data-genre="<%= movie.genre ? movie.genre.toLowerCase() : '' %>">
                                                 <div class="d-flex justify-content-between align-items-start">
-                                                    <div class="movie-title"><%= movie.title %></div>
-                                                    <span class="movie-type <%= movie.type %>">
-                                                        <%= movie.type === 'movie' ? '🎬 Película' : '📺 Serie' %>
+                                                    <div class="product-title"><%= movie.title %></div>
+                                                    <span class="product-type <%= movie.type === 'movie' ? 'product' : 'category' %>">
+                                                        <%= movie.type === 'movie' ? '🔌 Producto' : '� Categoría' %>
                                                     </span>
                                                 </div>
-                                                <div class="movie-year">
-                                                    <%= movie.year %> • <%= movie.genre %>
+                                                <div class="product-year">
+                                                    <%= movie.year %> • <%= movie.genre || 'Sin categoría' %>
                                                     <% if (movie.description) { %>
                                                         <br><small><%= movie.description.substring(0, 80) %>...</small>
                                                     <% } %>
@@ -136,17 +136,17 @@
                                         <% }); %>
                                     </div>
                                     
-                                    <input type="hidden" id="movie_title" name="movie_title" required>
-                                    <div id="selectedMovie" class="alert alert-info" style="display: none;">
+                                    <input type="hidden" id="product_title" name="movie_title" required>
+                                    <div id="selectedProduct" class="alert alert-info" style="display: none;">
                                         <i class="fas fa-check"></i> 
-                                        <span id="selectedMovieText"></span>
+                                        <span id="selectedProductText"></span>
                                     </div>
                                 <% } else { %>
                                     <div class="alert alert-warning">
                                         <i class="fas fa-exclamation-triangle"></i>
-                                        No hay películas o series disponibles en este momento.
+                                        No hay productos electrónicos disponibles en este momento.
                                         <br>
-                                        <small>Contacta con un administrador para agregar contenido.</small>
+                                        <small>Contacta con un administrador para agregar productos.</small>
                                     </div>
                                 <% } %>
                             </div>
@@ -182,7 +182,7 @@
                                     <i class="fas fa-comment"></i> Tu Opinión:
                                 </label>
                                 <textarea class="form-control" id="content" name="content" rows="6" 
-                                          placeholder="Comparte tu opinión sobre la película o serie. ¿Qué te gustó? ¿Qué no te gustó? ¿Recomendarías esta película?" required></textarea>
+                                          placeholder="Comparte tu opinión sobre el producto electrónico. ¿Qué te gustó? ¿Qué no te gustó? ¿Recomendarías este producto?" required></textarea>
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -203,7 +203,7 @@
 
     <footer class="bg-dark text-white text-center py-3 mt-5">
         <div class="container">
-            <p class="mb-0">CineCríticas &copy; 2024</p>
+            <p class="mb-0">ElectroTienda &copy; 2024</p>
         </div>
     </footer>
 
@@ -258,7 +258,8 @@
             // Actualizar campo oculto y mostrar selección
             document.getElementById('movie_title').value = title;
             const typeText = type === 'movie' ? 'Película' : 'Serie';
-            document.getElementById('selectedMovieText').textContent = `${typeText} seleccionada: ${title} (${year}) - ${genre}`;
+            const genreText = genre || 'Sin género';
+            document.getElementById('selectedMovieText').textContent = `${typeText} seleccionada: ${title} (${year}) - ${genreText}`;
             document.getElementById('selectedMovie').style.display = 'block';
             
             // Habilitar botón de envío

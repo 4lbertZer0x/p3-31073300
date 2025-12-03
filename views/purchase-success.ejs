@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            color: #2d3748;
+        }
+        
+        .success-icon {
+            font-size: 4em;
+            color: #48bb78;
+            margin-bottom: 20px;
+        }
+        
+        .success-title {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        .success-message {
+            color: #718096;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .purchase-details {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="success-card">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        
+        <h1 class="success-title">¡Compra Exitosa!</h1>
+        
+        <p class="success-message">
+            Tu compra se ha procesado correctamente. Ya puedes disfrutar de tu contenido.
+        </p>
+        
+        <div class="purchase-details">
+            <div class="detail-item">
+                <span>Película:</span>
+                <strong><%= purchase.movie_title %></strong>
+            </div>
+            <div class="detail-item">
+                <span>Monto:</span>
+                <strong>€<%= parseFloat(purchase.amount).toFixed(2) %></strong>
+            </div>
+            <div class="detail-item">
+                <span>Método de pago:</span>
+                <strong><%= purchase.payment_method %></strong>
+            </div>
+            <div class="detail-item">
+                <span>Fecha:</span>
+                <strong><%= new Date(purchase.created_at).toLocaleDateString('es-ES') %></strong>
+            </div>
+            <div class="detail-item">
+                <span>Estado:</span>
+                <strong style="color: #48bb78;">Completado</strong>
+            </div>
+        </div>
+        
+        <div style="margin-top: 25px;">
+            <a href="/movie/<%= purchase.movie_id %>" class="btn btn-primary">
+                <i class="fas fa-play"></i> Ver Película
+            </a>
+            <a href="/" class="btn btn-success">
+                <i class="fas fa-home"></i> Ir al Inicio
+            </a>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 0.9em; color: #718096;">
+            <p>Se ha enviado un correo de confirmación a tu email.</p>
+        </div>
+    </div>
+</body>
+</html>
