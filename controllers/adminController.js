@@ -5,35 +5,70 @@ class AdminController {
   /**
    * Mostrar panel de administración
    */
-  static async showDashboard(req, res) {
-    try {
-      const users = await DatabaseService.getAllUsers();
-      const reviews = await DatabaseService.getAllReviews();
-      const movies = await DatabaseService.getAllMovies();
-      const products = await DatabaseService.getAllProducts ? await DatabaseService.getAllProducts() : [];
-
-      res.render('admin', {
-        user: req.session.user,
-        users: users,
-        reviews: reviews,
-        movies: movies,
-        products: products,
-        success: req.query.success,
-        error: req.query.error
-      });
-    } catch (error) {
-      console.error('Error cargando panel admin:', error);
-      res.status(500).render('admin', {
-        user: req.session.user,
-        users: [],
-        reviews: [],
-        movies: [],
-        products: [],
-        error: 'Error al cargar el panel de administración'
+static async showDashboard(req, res) {
+  try {
+    console.log('📊 Cargando panel de administración...');
+    
+    const users = await DatabaseService.getAllUsers();
+    const reviews = await DatabaseService.getAllReviews();
+    const movies = await DatabaseService.getAllMovies();
+    
+    let products = [];
+    if (DatabaseService.getAllProducts && typeof DatabaseService.getAllProducts === 'function') {
+      console.log('🛍️ Obteniendo productos electrónicos...');
+      products = await DatabaseService.getAllProducts();
+      console.log(`✅ Encontrados ${products.length} productos`);
+      
+      // DEBUG: Mostrar qué hay realmente en products
+      console.log('🔍 DEBUG - Primeros 3 productos:');
+      products.slice(0, 3).forEach((p, i) => {
+        const plain = p.toJSON ? p.toJSON() : p;
+        console.log(`${i+1}. ID: ${plain.id}, Nombre: "${plain.name || plain.title}", Precio: $${plain.price}`);
       });
     }
-  }
 
+    // DEBUG: Pasar los productos como JSON plano a la vista
+    const plainProducts = products.map(p => {
+      const plain = p.toJSON ? p.toJSON() : p;
+      return {
+        id: plain.id,
+        name: plain.name || plain.title || 'Sin nombre',
+        title: plain.title || plain.name || 'Sin título',
+        price: plain.price || 0,
+        description: plain.description || '',
+        created_at: plain.created_at || new Date(),
+        category: plain.category || 'Sin categoría',
+        is_active: plain.is_active !== undefined ? plain.is_active : true,
+        // Asegurar que Categories exista
+        Categories: plain.Categories || []
+      };
+    });
+
+    console.log(`📤 Enviando ${plainProducts.length} productos a la vista`);
+
+    res.render('admin', {
+      title: 'Panel de Administración - ElectroTienda',
+      user: req.session.user,
+      users: users || [],
+      reviews: reviews || [],
+      movies: movies || [],
+      products: plainProducts, // Usar los productos convertidos a JSON plano
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('❌ Error cargando panel admin:', error);
+    res.status(500).render('admin', {
+      title: 'Error - Panel de Administración',
+      user: req.session.user,
+      users: [],
+      reviews: [],
+      movies: [],
+      products: [],
+      error: 'Error al cargar el panel de administración: ' + error.message
+    });
+  }
+}
   /**
    * Mostrar formulario para nuevo usuario
    */

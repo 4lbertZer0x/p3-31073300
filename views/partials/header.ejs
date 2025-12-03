@@ -1,32 +1,61 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - ElectroTienda</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <div class="container">
-        <header class="header">
-            <div class="logo">
-                <h1>🔌 ElectroTienda</h1>
-            </div>
-            <nav class="nav">
-                <ul>
-                    <li><a href="/" class="<%= title === 'Inicio' ? 'active' : '' %>">Inicio</a></li>
-                    <% if (locals.user) { %>
-                        <% if (locals.user.role === 'user') { %>
-                            <li><a href="/user/dashboard" class="<%= title === 'Mi Dashboard' ? 'active' : '' %>">Mi Cuenta</a></li>
-                            <li><a href="/user/reviews" class="<%= title === 'Escribir Crítica' ? 'active' : '' %>">Escribir Crítica</a></li>
-                        <% } else if (locals.user.role === 'admin') { %>
-                            <li><a href="/admin" class="<%= title === 'Panel de Administración' ? 'active' : '' %>">Admin</a></li>
-                        <% } %>
-                        <li><a href="/logout">Cerrar Sesión (<%= locals.user.username %>)</a></li>
-                    <% } else { %>
-                        <li><a href="/login" class="<%= title === 'Iniciar Sesión' ? 'active' : '' %>">Iniciar Sesión</a></li>
-                        <li><a href="/register" class="<%= title === 'Registrarse' ? 'active' : '' %>">Registrarse</a></li>
-                    <% } %>
-                </ul>
-            </nav>
-        </header>
+<header class="amazon-header">
+    <a href="/" class="logo">
+        <i class="fas fa-bolt logo-icon"></i>
+        <span class="logo-text">Electro<span>Tienda</span></span>
+    </a>
+
+    <form action="/search" method="GET" class="search-bar">
+        <input type="text" name="q" placeholder="Buscar productos, marcas, categorías..." 
+               value="<%= searchQuery || '' %>">
+        <button type="submit">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+    </form>
+
+    <div class="header-nav">
+        <% if (user) { %>
+            <a href="/user/profile" class="nav-item">
+                <span>Hola, <%= user.username %></span>
+                <span>Mi cuenta</span>
+            </a>
+        <% } else { %>
+            <a href="/login" class="nav-item">
+                <span>Hola, identifícate</span>
+                <span>Cuenta y listas</span>
+            </a>
+        <% } %>
+        
+        <a href="/cart" class="nav-item cart">
+            <i class="fas fa-shopping-cart" style="font-size: 1.5rem;"></i>
+            <span>Carrito</span>
+            <div class="cart-count">0</div>
+        </a>
+    </div>
+
+    <div class="user-menu">
+        <% if (user) { %>
+            <a href="/user/profile" class="btn btn-primary">
+                <i class="fas fa-user-circle"></i> Perfil
+            </a>
+            
+            <% if (user.role === 'admin') { %>
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-cog"></i> Admin
+                </a>
+            <% } %>
+            
+            <form method="POST" action="/logout" style="display: inline;">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </form>
+        <% } else { %>
+            <a href="/login" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Entrar
+            </a>
+            <a href="/register" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Registrarse
+            </a>
+        <% } %>
+    </div>
+</header>

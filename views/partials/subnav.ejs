@@ -1,0 +1,23 @@
+<nav class="amazon-subnav">
+    <div class="subnav-links">
+        <a href="/" class="<%= !category ? 'active' : '' %>">Inicio</a>
+        <a href="/category/electronics" class="<%= category === 'electronics' ? 'active' : '' %>">Electrónicos</a>
+        <a href="/category/computers" class="<%= category === 'computers' ? 'active' : '' %>">Computadoras</a>
+        <a href="/category/smartphones" class="<%= category === 'smartphones' ? 'active' : '' %>">Smartphones</a>
+        <a href="/category/gaming" class="<%= category === 'gaming' ? 'active' : '' %>">Gaming</a>
+        <a href="/category/audio" class="<%= category === 'audio' ? 'active' : '' %>">Audio</a>
+        <a href="/about" class="<%= title && title.includes('Acerca') ? 'active' : '' %>">Acerca</a>
+        <a href="/contact" class="<%= title && title.includes('Contacto') ? 'active' : '' %>">Contacto</a>
+        
+        <% if (user && user.role === 'admin') { %>
+            <div class="admin-links">
+                <a href="/admin" class="btn btn-secondary">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="/admin/products/new" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Nuevo Producto
+                </a>
+            </div>
+        <% } %>
+    </div>
+</nav>

@@ -2,500 +2,331 @@ const DatabaseService = require('../services/DatabaseService');
 
 class HomeController {
   /**
-   * Ruta de prueba para asociaciones de modelos
+   * Mostrar página de inicio (Tienda de Electrónicos) - VERSIÓN CORREGIDA
    */
-  static async testAssociations(req, res) {
+ static async showHome(req, res) {
+  try {
+    console.log('🏠 Cargando página de inicio...');
+    
+    // Obtener productos
+    let products = [];
+    
     try {
-      res.json({
-        success: true,
-        message: 'Asociaciones de modelos funcionando correctamente',
-        timestamp: new Date().toISOString()
+      products = await DatabaseService.Product.findAll({
+        limit: 12,
+        order: [['created_at', 'DESC']]
       });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      
+      console.log(`📦 Encontrados ${products.length} productos en BD`);
+    } catch (dbError) {
+      console.warn('⚠️ Error en BD, usando productos de ejemplo:', dbError.message);
+      products = HomeController.getSampleProducts();
     }
-  }
-  
-  /**
-   * Mostrar página de inicio (Tienda de Electrónicos)
-   */
-  static async showHome(req, res) {
-    try {
-      console.log('🏠 Cargando página de inicio de ElectroTienda...');
+    
+    // Procesar imágenes y asegurar categorías
+    const processProductImages = (product) => {
+      const productData = product.toJSON ? product.toJSON() : product;
       
-      // Manejar sesión undefined de forma segura
-      const user = req.session && req.session.user ? req.session.user : null;
-      
-      console.log('👤 Estado de sesión:', {
-        hasSession: !!req.session,
-        hasUser: !!user,
-        userId: user ? user.id : 'No user'
-      });
-
-      // Si tienes un modelo de Producto en DatabaseService, úsalo
-      // Si no, usa datos de ejemplo
-      let products = [];
-      
-      try {
-        // Intentar obtener productos de la base de datos
-        // Asegúrate de que DatabaseService tenga un modelo Product
-        if (DatabaseService.Product) {
-          console.log('🛍️ Buscando productos en la base de datos...');
-          products = await DatabaseService.Product.findAll({
-            limit: 12,
-            order: [['created_at', 'DESC']]
-          });
-          
-          console.log(`✅ Encontrados ${products.length} productos`);
-        } else {
-          console.log('ℹ️ No se encontró modelo Product, usando datos de ejemplo');
-          products = HomeController.getSampleProducts();
+      let images = [];
+      if (productData.images && typeof productData.images === 'string') {
+        try {
+          images = JSON.parse(productData.images);
+        } catch (e) {
+          images = [productData.images];
         }
-      } catch (dbError) {
-        console.warn('⚠️ Error al obtener productos de BD, usando datos de ejemplo:', dbError.message);
-        products = HomeController.getSampleProducts();
+      } else if (productData.images) {
+        images = productData.images;
       }
-
-      // Procesar los productos para la vista
-      const processedProducts = products.map(product => {
-        const productData = product.toJSON ? product.toJSON() : product;
-        
-        // Asegurar que todos los campos necesarios existan
-        return {
-          id: productData.id || 0,
-          title: productData.title || 'Producto sin nombre',
-          description: productData.description || 'Descripción no disponible',
-          price: productData.price || 0.00,
-          rating: productData.rating || 4.0,
-          review_count: productData.review_count || 0,
-          free_shipping: productData.free_shipping !== undefined ? productData.free_shipping : true,
-          icon: productData.icon || this.getIconForCategory(productData.category),
-          category: productData.category || 'electronics',
-          image_url: productData.image_url || null,
-          stock: productData.stock || 10,
-          created_at: productData.created_at || new Date()
-        };
-      });
-
-      console.log('📦 Productos procesados:', processedProducts.length);
-
-      res.render('home', {
-        title: 'ElectroTienda - Tu tienda de electrónicos online',
-        user: user,
-        products: processedProducts,
-        success: req.query.success,
-        error: req.query.error
-      });
-
-    } catch (error) {
-      console.error('❌ Error cargando página de inicio:', error);
       
-      // Manejar sesión undefined en el catch
-      const user = req.session && req.session.user ? req.session.user : null;
+      const productDate = productData.created_at || new Date();
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const isNew = new Date(productDate) > thirtyDaysAgo;
       
-      // Usar productos de ejemplo en caso de error
-      const sampleProducts = HomeController.getSampleProducts();
-
-      res.render('home', {
-        title: 'ElectroTienda',
-        user: user,
-        products: sampleProducts,
-        error: 'Error al cargar los productos. Mostrando productos de ejemplo.'
-      });
-    }
+      const originalPrice = productData.original_price || productData.price * 1.2;
+      const onSale = originalPrice > productData.price;
+      
+      return {
+        id: productData.id || 0,
+        name: productData.name || productData.title || 'Producto sin nombre',
+        description: productData.description || 'Descripción no disponible',
+        price: parseFloat(productData.price) || 0,
+        original_price: parseFloat(originalPrice) || 0,
+        images: images,
+        image_url: images.length > 0 ? images[0] : '/images/default-product.jpg',
+        category: productData.category || 'electronics', // ← VALOR POR DEFECTO
+        brand: productData.brand || '',
+        sku: productData.sku || '',
+        stock: productData.stock || 0,
+        rating: productData.rating || 4.5,
+        review_count: productData.review_count || 0,
+        is_new: isNew,
+        on_sale: onSale,
+        free_shipping: productData.free_shipping || true
+      };
+    };
+    
+    const processedProducts = products.map(processProductImages);
+    
+    return res.render('home', {
+      title: 'ElectroTienda - Tecnología al Mejor Precio',
+      products: processedProducts,
+      user: req.session.user || null,
+      success: req.flash('success') || null,
+      error: req.flash('error') || null,
+      category: null,
+      categoryName: 'Productos Destacados',
+      searchQuery: ''
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en homeController.showHome:', error);
+    
+    return res.status(500).render('error', {
+      title: 'Error - ElectroTienda',
+      message: 'Error al cargar la página de inicio',
+      error: process.env.NODE_ENV === 'development' ? error.message : null,
+      user: req.session.user || null
+    });
   }
+}
 
   /**
-   * Datos de ejemplo de productos
+   * Datos de ejemplo de productos (actualizado)
    */
   static getSampleProducts() {
     return [
       {
         id: 1,
+        name: 'iPhone 15 Pro Max 256GB',
         title: 'iPhone 15 Pro Max 256GB',
         description: 'El smartphone más avanzado de Apple con cámara profesional y pantalla Super Retina XDR',
         price: 1299.99,
+        original_price: 1399.99,
         rating: 4.5,
         review_count: 342,
         free_shipping: true,
-        icon: 'mobile-alt',
+        images: ['https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-finish-select-202309-6-7inch?wid=5120&hei=2880&fmt=webp&qlt=70&.v=1693009279096'],
         category: 'smartphones',
+        brand: 'Apple',
         stock: 15,
-        created_at: new Date()
+        created_at: new Date('2023-12-01')
       },
       {
         id: 2,
+        name: 'Laptop Dell XPS 15',
         title: 'Laptop Dell XPS 15',
         description: 'Laptop profesional con pantalla 4K OLED, procesador Intel i9 y 32GB RAM',
         price: 1899.99,
+        original_price: 1999.99,
         rating: 4.7,
         review_count: 128,
         free_shipping: true,
-        icon: 'laptop',
+        images: ['https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/xps-notebooks/xps-15-9530/media-gallery/notebook-xps-15-9530-nt-black-gallery-1.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=536&qlt=100,1&resMode=sharp2&size=536,402&chrss=full'],
         category: 'computers',
+        brand: 'Dell',
         stock: 8,
-        created_at: new Date()
+        created_at: new Date('2023-11-15')
       },
       {
         id: 3,
+        name: 'PlayStation 5 + 2 Mandos',
         title: 'PlayStation 5 + 2 Mandos',
         description: 'Consola de última generación con disco de 825GB y tecnología Ray Tracing',
         price: 499.99,
         rating: 4.8,
         review_count: 567,
         free_shipping: true,
-        icon: 'gamepad',
+        images: ['https://media.direct.playstation.com/is/image/psdglobal/PS5-console-front'],
         category: 'gaming',
+        brand: 'Sony',
         stock: 25,
-        created_at: new Date()
+        created_at: new Date('2023-10-20')
       },
       {
         id: 4,
+        name: 'Auriculares Sony WH-1000XM5',
         title: 'Auriculares Sony WH-1000XM5',
         description: 'Cancelación de ruido premium con 30h de batería y calidad de sonido Hi-Res',
         price: 349.99,
+        original_price: 399.99,
         rating: 4.6,
         review_count: 234,
         free_shipping: true,
-        icon: 'headphones',
+        images: ['https://www.sony.com/image/7d6e2139f804b82a10b6c7a6c50e75c8?fmt=pjpeg&bgcolor=FFFFFF&bgc=FFFFFF&wid=2515&hei=1320'],
         category: 'audio',
+        brand: 'Sony',
         stock: 30,
-        created_at: new Date()
+        created_at: new Date('2023-12-10')
       },
       {
         id: 5,
-        title: 'Smartwatch Apple Watch Series 9',
-        description: 'Reloj inteligente con ECG, monitor de sueño y resistencia al agua',
-        price: 399.99,
+        name: 'Samsung Galaxy Tab S9 Ultra',
+        title: 'Samsung Galaxy Tab S9 Ultra',
+        description: 'Tablet premium con pantalla Dynamic AMOLED 2X de 14.6" y S Pen incluido',
+        price: 1199.99,
         rating: 4.4,
-        review_count: 189,
+        review_count: 89,
         free_shipping: true,
-        icon: 'smartwatch',
-        category: 'wearables',
-        stock: 20,
-        created_at: new Date()
+        images: ['https://images.samsung.com/is/image/samsung/p6pim/es/feature/164803662/feature--gallery-501926436?$FB_TYPE_A_MO_JPG$'],
+        category: 'tablets',
+        brand: 'Samsung',
+        stock: 12,
+        created_at: new Date('2023-11-05')
       },
       {
         id: 6,
-        title: 'Tablet Samsung Galaxy Tab S9',
-        description: 'Tablet AMOLED de 12.4" con S Pen incluido y procesador Snapdragon 8 Gen 2',
-        price: 899.99,
-        rating: 4.3,
-        review_count: 76,
-        free_shipping: false,
-        icon: 'tablet-alt',
-        category: 'tablets',
-        stock: 12,
-        created_at: new Date()
-      },
-      {
-        id: 7,
-        title: 'Cámara Sony Alpha 7 III',
-        description: 'Cámara mirrorless full frame 24MP para fotografía y video profesional',
-        price: 1999.99,
-        rating: 4.9,
-        review_count: 89,
-        free_shipping: true,
-        icon: 'camera',
-        category: 'cameras',
-        stock: 5,
-        created_at: new Date()
-      },
-      {
-        id: 8,
-        title: 'Altavoz inteligente Echo Dot 5a Gen',
-        description: 'Asistente de voz Alexa con sonido mejorado y control de dispositivos inteligentes',
-        price: 49.99,
-        rating: 4.2,
-        review_count: 543,
-        free_shipping: true,
-        icon: 'assistive-listening-systems',
-        category: 'smart-home',
-        stock: 50,
-        created_at: new Date()
-      },
-      {
-        id: 9,
-        title: 'Monitor Gaming 27" 144Hz',
-        description: 'Monitor QHD 2560x1440, 144Hz, 1ms para gaming competitivo',
-        price: 299.99,
-        rating: 4.5,
-        review_count: 156,
-        free_shipping: false,
-        icon: 'tv',
-        category: 'monitors',
-        stock: 18,
-        created_at: new Date()
-      },
-      {
-        id: 10,
-        title: 'Teclado Mecánico RGB Gaming',
-        description: 'Teclado mecánico con switches Blue, retroiluminación RGB y diseño ergonómico',
-        price: 89.99,
-        rating: 4.1,
-        review_count: 203,
-        free_shipping: true,
-        icon: 'keyboard',
-        category: 'accessories',
-        stock: 35,
-        created_at: new Date()
-      },
-      {
-        id: 11,
-        title: 'Drone DJI Mini 3 Pro',
-        description: 'Drone profesional con cámara 4K, 48MP y autonomía de 34 minutos',
-        price: 759.99,
+        name: 'Apple Watch Series 9',
+        title: 'Apple Watch Series 9',
+        description: 'Smartwatch con monitorización de salud avanzada y pantalla Always-On',
+        price: 429.99,
+        original_price: 449.99,
         rating: 4.7,
-        review_count: 94,
+        review_count: 312,
         free_shipping: true,
-        icon: 'drone',
-        category: 'drones',
-        stock: 7,
-        created_at: new Date()
-      },
-      {
-        id: 12,
-        title: 'Router Wi-Fi 6 Mesh 3 Pack',
-        description: 'Sistema Mesh Wi-Fi 6 para cobertura total en toda la casa',
-        price: 249.99,
-        rating: 4.4,
-        review_count: 67,
-        free_shipping: true,
-        icon: 'wifi',
-        category: 'networking',
-        stock: 22,
-        created_at: new Date()
+        images: ['https://www.apple.com/newsroom/images/product/watch/standard/Apple-Watch-S9-hero-230912.jpg.og.jpg'],
+        category: 'wearables',
+        brand: 'Apple',
+        stock: 18,
+        created_at: new Date('2023-12-05')
       }
     ];
   }
 
+  // ... (el resto de tus métodos se mantienen igual, pero asegúrate de que showProduct también maneje imágenes correctamente)
+
   /**
-   * Obtener icono según categoría
+   * Mostrar detalles de producto - VERSIÓN ACTUALIZADA
    */
-  static getIconForCategory(category) {
-    const iconMap = {
-      'smartphones': 'mobile-alt',
-      'computers': 'laptop',
-      'gaming': 'gamepad',
-      'audio': 'headphones',
-      'wearables': 'smartwatch',
-      'tablets': 'tablet-alt',
-      'cameras': 'camera',
-      'smart-home': 'home',
-      'monitors': 'tv',
-      'accessories': 'keyboard',
-      'drones': 'drone',
-      'networking': 'wifi',
-      'electronics': 'microchip'
+static async showProduct(req, res) {
+  try {
+    const productId = req.params.id;
+    console.log(`📦 Mostrando producto ID: ${productId}`);
+    
+    let product = null;
+    
+    // Intentar obtener de la base de datos
+    if (DatabaseService.Product) {
+      product = await DatabaseService.Product.findByPk(productId);
+    }
+    
+    // Si no está en BD, buscar en productos de ejemplo
+    if (!product) {
+      const sampleProducts = HomeController.getSampleProducts();
+      product = sampleProducts.find(p => p.id === parseInt(productId));
+    }
+    
+    if (!product) {
+      return res.status(404).render('error', {
+        title: 'Producto no encontrado',
+        message: 'El producto solicitado no existe',
+        user: req.session.user || null
+      });
+    }
+    
+    const productData = product.toJSON ? product.toJSON() : product;
+    
+    // Procesar imágenes
+    let images = [];
+    if (productData.images && typeof productData.images === 'string') {
+      try {
+        images = JSON.parse(productData.images);
+      } catch (e) {
+        images = [productData.images];
+      }
+    } else if (Array.isArray(productData.images)) {
+      images = productData.images;
+    } else if (productData.image_url) {
+      images = [productData.image_url];
+    }
+    
+    // Obtener productos relacionados (sin usar category por ahora)
+    let relatedProducts = [];
+    try {
+      if (DatabaseService.Product) {
+        const { Op } = require('sequelize');
+        // Buscar productos relacionados por ID (excluyendo el actual)
+        relatedProducts = await DatabaseService.Product.findAll({
+          where: {
+            id: { [Op.ne]: productData.id }
+          },
+          limit: 4,
+          order: [['created_at', 'DESC']]
+        });
+        console.log(`🔗 Encontrados ${relatedProducts.length} productos sugeridos`);
+      }
+    } catch (relatedError) {
+      console.warn('⚠️ No se pudieron obtener productos relacionados:', relatedError.message);
+      // Usar productos de ejemplo
+      const sampleProducts = HomeController.getSampleProducts();
+      relatedProducts = sampleProducts.filter(p => p.id !== productData.id).slice(0, 4);
+    }
+    
+    // Procesar productos relacionados
+    const processedRelated = relatedProducts.map(p => {
+      const pData = p.toJSON ? p.toJSON() : p;
+      let pImages = [];
+      
+      if (pData.images && typeof pData.images === 'string') {
+        try {
+          pImages = JSON.parse(pData.images);
+        } catch (e) {
+          pImages = [pData.images];
+        }
+      } else if (Array.isArray(pData.images)) {
+        pImages = pData.images;
+      }
+      
+      return {
+        ...pData,
+        image_url: pImages.length > 0 ? pImages[0] : '/images/default-product.jpg'
+      };
+    });
+    
+    // Preparar datos del producto para la vista
+    const productForView = {
+      ...productData,
+      id: productData.id || 0,
+      name: productData.name || productData.title || 'Producto sin nombre',
+      description: productData.description || 'Descripción no disponible',
+      price: parseFloat(productData.price) || 0,
+      original_price: parseFloat(productData.original_price) || 0,
+      category: productData.category || 'electronics',
+      images: images,
+      image_url: images.length > 0 ? images[0] : '/images/default-product.jpg',
+      stock: productData.stock || 0,
+      rating: productData.rating || 4.5,
+      review_count: productData.review_count || 0,
+      is_new: productData.is_new || false,
+      on_sale: productData.on_sale || false,
+      free_shipping: productData.free_shipping || true,
+      brand: productData.brand || '',
+      sku: productData.sku || ''
     };
     
-    return iconMap[category] || 'box';
+    // Pasar URL base para compartir
+    const baseUrl = `${req.protocol}://${req.headers.host}`;
+    const shareUrl = `${baseUrl}/p/${productForView.id}`;
+    
+    res.render('product', {
+      title: `${productForView.name} - ElectroTienda`,
+      user: req.session.user || null,
+      product: productForView,
+      relatedProducts: processedRelated,
+      searchQuery: '',
+      shareUrl: shareUrl, // ← Pasar la URL completa
+      baseUrl: baseUrl    // ← Pasar la URL base
+    });
+    
+  } catch (error) {
+    console.error('❌ Error mostrando producto:', error);
+    return res.status(500).render('error', {
+      title: 'Error - ElectroTienda',
+      message: 'Error al cargar el producto',
+      error: process.env.NODE_ENV === 'development' ? error.message : null,
+      user: req.session.user || null
+    });
   }
-
-  /**
-   * Buscar productos
-   */
-  static async searchProducts(req, res) {
-    try {
-      const user = req.session && req.session.user ? req.session.user : null;
-      const query = req.query.q || '';
-      
-      console.log(`🔍 Buscando productos: "${query}"`);
-      
-      let products = [];
-      
-      if (query.trim()) {
-        // Si tienes modelo Product y quieres buscar en BD
-        if (DatabaseService.Product) {
-          const { Op } = require('sequelize');
-          products = await DatabaseService.Product.findAll({
-            where: {
-              [Op.or]: [
-                { title: { [Op.like]: `%${query}%` } },
-                { description: { [Op.like]: `%${query}%` } },
-                { category: { [Op.like]: `%${query}%` } }
-              ]
-            },
-            limit: 20
-          });
-        } else {
-          // Filtrar productos de ejemplo
-          const sampleProducts = this.getSampleProducts();
-          const searchTerm = query.toLowerCase();
-          products = sampleProducts.filter(product => 
-            product.title.toLowerCase().includes(searchTerm) ||
-            product.description.toLowerCase().includes(searchTerm) ||
-            product.category.toLowerCase().includes(searchTerm)
-          );
-        }
-      } else {
-        products = this.getSampleProducts().slice(0, 12);
-      }
-      
-      res.render('home', {
-        title: `Buscar: ${query} - ElectroTienda`,
-        user: user,
-        products: products,
-        searchQuery: query,
-        success: req.query.success,
-        error: req.query.error
-      });
-    } catch (error) {
-      console.error('❌ Error en búsqueda de productos:', error);
-      res.render('home', {
-        title: 'ElectroTienda',
-        user: req.session && req.session.user ? req.session.user : null,
-        products: [],
-        error: 'Error en la búsqueda'
-      });
-    }
-  }
-
-  /**
-   * Mostrar productos por categoría
-   */
-  static async showCategory(req, res) {
-    try {
-      const user = req.session && req.session.user ? req.session.user : null;
-      const category = req.params.category;
-      
-      console.log(`📂 Mostrando categoría: ${category}`);
-      
-      let products = [];
-      
-      // Si tienes modelo Product
-      if (DatabaseService.Product) {
-        products = await DatabaseService.Product.findAll({
-          where: { category: category },
-          limit: 20
-        });
-      } else {
-        // Filtrar productos de ejemplo por categoría
-        const sampleProducts = this.getSampleProducts();
-        products = sampleProducts.filter(product => 
-          product.category === category
-        );
-      }
-      
-      const categoryNames = {
-        'smartphones': 'Smartphones',
-        'computers': 'Computadoras y Laptops',
-        'gaming': 'Videojuegos',
-        'audio': 'Audio y Sonido',
-        'wearables': 'Wearables',
-        'tablets': 'Tablets',
-        'cameras': 'Cámaras',
-        'smart-home': 'Smart Home',
-        'monitors': 'Monitores',
-        'accessories': 'Accesorios',
-        'drones': 'Drones',
-        'networking': 'Redes'
-      };
-      
-      res.render('category', {
-        title: `${categoryNames[category] || category} - ElectroTienda`,
-        user: user,
-        products: products,
-        category: category,
-        categoryName: categoryNames[category] || category
-      });
-    } catch (error) {
-      console.error('❌ Error mostrando categoría:', error);
-      res.redirect('/?error=Error al cargar la categoría');
-    }
-  }
-
-  /**
-   * Mostrar detalles de producto
-   */
-  static async showProduct(req, res) {
-    try {
-      const user = req.session && req.session.user ? req.session.user : null;
-      const productId = req.params.id;
-      
-      console.log(`📦 Mostrando producto ID: ${productId}`);
-      
-      let product = null;
-      
-      // Si tienes modelo Product
-      if (DatabaseService.Product) {
-        product = await DatabaseService.Product.findByPk(productId);
-      } else {
-        // Buscar en productos de ejemplo
-        const sampleProducts = this.getSampleProducts();
-        product = sampleProducts.find(p => p.id === parseInt(productId));
-      }
-      
-      if (!product) {
-        return res.redirect('/?error=Producto no encontrado');
-      }
-      
-      res.render('product', {
-        title: `${product.title} - ElectroTienda`,
-        user: user,
-        product: product
-      });
-    } catch (error) {
-      console.error('❌ Error mostrando producto:', error);
-      res.redirect('/?error=Error al cargar el producto');
-    }
-  }
-
-  /**
-   * Ruta de prueba para verificar funcionamiento
-   */
-  static async test(req, res) {
-    try {
-      console.log('🔍 Probando HomeController...');
-      
-      res.json({
-        success: true,
-        message: 'HomeController funcionando correctamente',
-        sampleProductsCount: this.getSampleProducts().length,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('❌ Error en test:', error);
-      res.json({
-        success: false,
-        error: error.message
-      });
-    }
-  }
-
-  /**
-   * Mostrar página about
-   */
-  static async showAbout(req, res) {
-    try {
-      const user = req.session && req.session.user ? req.session.user : null;
-      
-      res.render('about', {
-        title: 'Acerca de - ElectroTienda',
-        user: user
-      });
-    } catch (error) {
-      console.error('Error cargando página about:', error);
-      res.redirect('/?error=Error al cargar la página');
-    }
-  }
-
-  /**
-   * Mostrar página de contacto
-   */
-  static async showContact(req, res) {
-    try {
-      const user = req.session && req.session.user ? req.session.user : null;
-      
-      res.render('contact', {
-        title: 'Contacto - ElectroTienda',
-        user: user
-      });
-    } catch (error) {
-      console.error('Error cargando página de contacto:', error);
-      res.redirect('/?error=Error al cargar la página');
-    }
-  }
+}
 }
 
 module.exports = HomeController;

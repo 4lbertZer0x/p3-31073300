@@ -1,18 +1,44 @@
 class DatabaseService {
-  async getAllProducts() {
+async getAllProducts() {
+  try {
+    await this.ensureDatabase();
+    if (!this.Product) {
+      console.log('❌ Modelo Product no disponible');
+      return [];
+    }
+
+    console.log('🛍️ Obteniendo todos los productos...');
+    
+    // OPCIÓN 1: Obtener productos SIN categorías (para probar)
+    const products = await this.Product.findAll({
+      order: [['created_at', 'DESC']],
+      raw: true // Esto devuelve objetos planos en lugar de instancias de Sequelize
+    });
+    
+    console.log(`✅ Encontrados ${products.length} productos (sin categorías)`);
+    
+    // OPCIÓN 2: Intentar con el alias correcto (si sabes cuál es)
+    // Si no sabes el alias, usa la opción 1 arriba
+    
+    return products;
+  } catch (error) {
+    console.error('❌ Error en getAllProducts:', error.message);
+    
+    // Si hay error con las asociaciones, obtener productos sin incluir categorías
     try {
-      await this.ensureDatabase();
-      if (!this.Product) return [];
-      // Incluir todas las categorías asociadas (muchos a muchos)
-      return await this.Product.findAll({ 
+      console.log('🔄 Intentando obtener productos sin asociaciones...');
+      const simpleProducts = await this.Product.findAll({
         order: [['created_at', 'DESC']],
-        include: this.Category ? [{ model: this.Category, as: 'Categories', through: { attributes: [] } }] : []
+        raw: true
       });
-    } catch (error) {
-      console.error('❌ Error en getAllProducts:', error.message);
+      console.log(`✅ Encontrados ${simpleProducts.length} productos (modo simple)`);
+      return simpleProducts;
+    } catch (simpleError) {
+      console.error('❌ Error incluso en modo simple:', simpleError.message);
       return [];
     }
   }
+}
   constructor() {
     this.initialized = false;
     try {

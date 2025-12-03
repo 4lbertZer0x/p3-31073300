@@ -328,6 +328,7 @@
             </div>
         </div>
 
+        <!-- SECCIÓN DE PRODUCTOS - VERSIÓN CORREGIDA -->
         <div class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 class="section-title">
@@ -336,6 +337,17 @@
                 <a href="/admin/products/new" class="btn btn-success btn-sm">
                     <i class="fas fa-plus-circle"></i> Agregar Producto
                 </a>
+            </div>
+
+            <!-- DIAGNÓSTICO VISUAL -->
+            <div style="background: <% if (products && products.length > 0) { %>#d4edda<% } else { %>#f8d7da<% } %>; 
+                  padding: 10px; border-radius: 5px; margin-bottom: 15px; border-left: 4px solid <% if (products && products.length > 0) { %>#28a745<% } else { %>#dc3545<% } %>;">
+                <strong><% if (products && products.length > 0) { %>✅<% } else { %>❌<% } %> Estado:</strong> 
+                <% if (products && products.length > 0) { %>
+                    Hay <strong><%= products.length %></strong> producto(s) en la base de datos
+                <% } else { %>
+                    No hay productos en la base de datos
+                <% } %>
             </div>
 
             <% if (products && products.length > 0) { %>
@@ -347,38 +359,59 @@
                                 <th>Nombre</th>
                                 <th>Precio</th>
                                 <th>Descripción</th>
-                                <th>Fecha de Publicación</th>
                                 <th>Categoría</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <% products.forEach(function(product) { %>
-                                <tr>
+                            <% products.forEach(function(product, index) { %>
+                                <tr style="<%= index % 2 === 0 ? 'background: #f8f9fa;' : '' %>">
                                     <td><strong>#<%= product.id %></strong></td>
                                     <td>
-                                        <strong><%= product.name || product.title %></strong>
-                                    </td>
-                                    <td>$<%= product.price ? product.price.toFixed(2) : '0.00' %></td>
-                                    <td>
-                                        <% if (product.description) { %>
-                                            <small style="color: #718096;"><%= product.description.substring(0, 50) %>...</small>
+                                        <strong><%= product.name || product.title || 'Sin nombre' %></strong>
+                                        <% if (product.title && product.title !== product.name) { %>
+                                            <br><small style="color: #6c757d;"><%= product.title %></small>
                                         <% } %>
                                     </td>
-                                    <td><%= product.created_at ? new Date(product.created_at).toLocaleDateString('es-ES') : '-' %></td>
-                                                                        <td>
-                                                                            <% if (product.Categories && product.Categories.length > 0) { %>
-                                                                                <%= product.Categories.map(c => c.name).join(', ') %>
-                                                                            <% } else { %>
-                                                                                N/A
-                                                                            <% } %>
-                                                                        </td>
+                                    <td>
+                                        $<%= product.price ? parseFloat(product.price).toFixed(2) : '0.00' %>
+                                    </td>
+                                    <td>
+                                        <% if (product.description) { %>
+                                            <div style="max-width: 200px;">
+                                                <small style="color: #718096; display: block; overflow: hidden; text-overflow: ellipsis;">
+                                                    <%= product.description.length > 50 ? 
+                                                        product.description.substring(0, 50) + '...' : 
+                                                        product.description %>
+                                                </small>
+                                            </div>
+                                        <% } else { %>
+                                            <small style="color: #adb5bd;"><em>Sin descripción</em></small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (product.Categories && product.Categories.length > 0) { %>
+                                            <% product.Categories.forEach(function(category) { %>
+                                                <span style="display: inline-block; background: #e3f2fd; color: #1976d2; 
+                                                      padding: 3px 8px; border-radius: 12px; font-size: 11px; margin: 2px;">
+                                                    <%= category.name %>
+                                                </span>
+                                            <% }); %>
+                                        <% } else if (product.category) { %>
+                                            <span style="background: #e3f2fd; color: #1976d2; padding: 3px 8px; 
+                                                  border-radius: 12px; font-size: 11px;">
+                                                <%= product.category %>
+                                            </span>
+                                        <% } else { %>
+                                            <span style="color: #adb5bd;">Sin categoría</span>
+                                        <% } %>
+                                    </td>
                                     <td>
                                         <% if (product.is_active) { %>
-                                            <span class="badge badge-active">Activo</span>
+                                            <span class="badge badge-active">✅ Activo</span>
                                         <% } else { %>
-                                            <span class="badge badge-inactive">Inactivo</span>
+                                            <span class="badge badge-inactive">❌ Inactivo</span>
                                         <% } %>
                                     </td>
                                     <td class="action-buttons">
@@ -388,7 +421,7 @@
                                         <% if (product.is_active) { %>
                                             <form action="/admin/products/<%= product.id %>/delete" method="POST" style="display: inline;">
                                                 <button type="submit" class="btn btn-warning btn-sm" 
-                                                        onclick="return confirm('¿Desactivar <%= product.title %>?')"
+                                                        onclick="return confirm('¿Desactivar <%= product.name || product.title %>?')"
                                                         title="Desactivar">
                                                     <i class="fas fa-eye-slash"></i>
                                                 </button>
@@ -396,7 +429,7 @@
                                         <% } else { %>
                                             <form action="/admin/products/<%= product.id %>/activate" method="POST" style="display: inline;">
                                                 <button type="submit" class="btn btn-success btn-sm" 
-                                                        onclick="return confirm('¿Activar <%= product.title %>?')"
+                                                        onclick="return confirm('¿Activar <%= product.name || product.title %>?')"
                                                         title="Activar">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
@@ -408,18 +441,38 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- RESUMEN DE PRODUCTOS -->
+                <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 14px;">
+                    <strong>Resumen:</strong> 
+                    <%= products.filter(function(p) { return p.is_active; }).length %> activos | 
+                    <%= products.filter(function(p) { return !p.is_active; }).length %> inactivos
+                </div>
             <% } else { %>
                 <div class="empty-state">
                     <i class="fas fa-box"></i>
                     <h3>No hay productos electrónicos</h3>
-                    <p>Comienza agregando el primer producto.</p>
-                    <a href="/admin/products/new" class="btn btn-success mt-3">
-                        <i class="fas fa-plus-circle"></i> Crear Primer Producto
-                    </a>
+                    <p>No se encontraron productos en la base de datos.</p>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; max-width: 500px; margin: 20px auto;">
+                        <strong>¿Qué puedes hacer?</strong>
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                            <!-- Botón para crear productos de prueba -->
+                            <form action="/create-test-products" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-magic"></i> Crear Productos de Prueba
+                                </button>
+                            </form>
+                            <a href="/admin/products/new" class="btn btn-success">
+                                <i class="fas fa-plus-circle"></i> Crear Producto Manual
+                            </a>
+                        </div>
+                    </div>
                 </div>
             <% } %>
         </div>
 
+        <!-- SECCIÓN DE USUARIOS (sin cambios) -->
         <div class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 class="section-title">
@@ -496,6 +549,7 @@
             <% } %>
         </div>
 
+        <!-- SECCIÓN DE RESEÑAS (sin cambios) -->
         <div class="section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 class="section-title">
@@ -601,12 +655,12 @@
                 });
             });
 
-            // Confirmación para activar/desactivar películas
-            var movieToggleForms = document.querySelectorAll('form[action*="/activate"], form[action*="/delete"]');
-            movieToggleForms.forEach(function(form) {
+            // Confirmación para activar/desactivar productos
+            var productToggleForms = document.querySelectorAll('form[action*="/activate"], form[action*="/delete"]');
+            productToggleForms.forEach(function(form) {
                 form.addEventListener('submit', function(e) {
                     var action = form.action.includes('/activate') ? 'activar' : 'desactivar';
-                    if (!confirm('¿Estás seguro de que quieres ' + action + ' esta película/serie?')) {
+                    if (!confirm('¿Estás seguro de que quieres ' + action + ' este producto?')) {
                         e.preventDefault();
                     }
                 });
@@ -622,6 +676,16 @@
                     }
                 });
             });
+
+            // Función para crear productos de prueba
+            var createTestBtn = document.querySelector('form[action="/create-test-products"]');
+            if (createTestBtn) {
+                createTestBtn.addEventListener('submit', function(e) {
+                    if (!confirm('¿Crear 3 productos de prueba? Esto agregará productos de ejemplo a la base de datos.')) {
+                        e.preventDefault();
+                    }
+                });
+            }
         });
     </script>
 </body>
